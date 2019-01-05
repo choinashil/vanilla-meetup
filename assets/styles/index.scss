@@ -1,0 +1,98 @@
+// Apply a natural box layout model to all elements
+// but allowing components to change
+// http://www.paulirish.com/2012/box-sizing-border-box-ftw/
+html, body {
+    box-sizing: border-box;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+.header {
+    width: 100%;
+    height: 80px;
+    background-color: #21232c;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    
+    .title {
+        // border: 1px solid red;
+        display: flex;
+        
+        font-family: 'Kaushan Script', cursive;
+        color: #fff;
+        font-size: 25px;
+        line-height: 22px;
+        text-align: center;
+       
+    }
+}
+
+
+.content{
+    // margin: 50px 0px 0px 30px;
+    // border: 3px solid orange;
+    width: 80%;
+    height: calc(100% - 80px);
+    box-shadow: 2px 3px 5px rgba(0, 0, 0, .5);
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    position: relative;
+
+    .gmnoprint {
+        display: none;
+    }
+    .controls {
+        // border: 1px solid rgba(0, 0, 0, .2);
+        border: none;
+        box-shadow: 2px 3px 2px rgba(0, 0, 0, .2);
+        transform: translateX(-17px);
+    }
+}
+
+#pac-input {
+    margin: 10px;
+    width: 300px;
+    height: 40px;
+    padding: 10px;
+    font-size: 20px;
+    position: absolute;
+    outline: none;
+    margin-top: 10px;
+    // font-family: 'Kaushan Script', cursive;
+
+}  
+
+// #floating-panel {
+// position: absolute;
+// top: 10px;
+// left: 25%;
+// z-index: 5;
+// background-color: #fff;
+// padding: 5px;
+// border: 1px solid #999;
+// text-align: center;
+// font-family: 'Roboto','sans-serif';
+// line-height: 30px;
+// padding-left: 10px;
+// }
+
+
+.list {
+    width: 300px;
+    height: 500px;
+    border: 1px solid red;
+    float: left;
+}
+
+.image {
+    width: 15pxß;
+}
+

@@ -1,5 +1,5 @@
 // Load application styles
-import 'styles/index.less';
+import 'styles/index.scss';
 
 // ================================
 // START YOUR APP HERE
@@ -16,20 +16,22 @@ import $ from 'jquery';
 //         url: 'https://api.meetup.com/find/upcoming_events\?key\=f414b55d7015574938371e29587622',
 //         dataType: 'jsonp',
 //         success: function(data) {console.log(data)}
-//     })    
-// }
+//     })
+// }s
 
 var map;
-var position;
+var markers = [];
+var marker;
 
 initMap();
 
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
-      center: {lat: -33.8688, lng: 151.2195},
-      zoom: 13
+        center: {lat: 55.67528613506351 , lng: 12.569255856587574},
+        zoom: 12,
     });
 
+    // 48.861004500037154 2.3571336952585398 파리
     //  37.504464, 127.024415 강남역
     //  40.714047, -74.004013  뉴욕
 
@@ -45,22 +47,21 @@ function initMap() {
     var infowindowContent = document.getElementById('infowindow-content');
     infowindow.setContent(infowindowContent);
     var geocoder = new google.maps.Geocoder;
-    var marker = new google.maps.Marker({
-        position: position,
+    marker = new google.maps.Marker({
         map: map
     });
-    marker.addListener('click', function() {
-        infowindow.open(map, marker);
-    });
+    // marker.addListener('click', function() {
+    //     infowindow.open(map, marker);
+    // });
 
 
-    google.maps.event.addListener(map, "click", function (e) {
+    map.addListener('click', function (e) {
         //lat and lng is available in e object
         console.log(e.latLng.lat(), e.latLng.lng());
 
         var pointer = document.createElement('div');
         pointer.classList.add('pointer');
-        // pointer.style.left = 
+        // pointer.style.left =
         console.log('클릭 후 데이터 수집중');
         requestData(e.latLng.lat(), e.latLng.lng());
 
@@ -77,12 +78,12 @@ function initMap() {
     // var marker = new google.maps.Marker({position: uluru, map: map});
 
     autocomplete.addListener('place_changed', function() {
-      infowindow.close();
-      var place = autocomplete.getPlace();
-      if (!place.place_id) {
+        infowindow.close();
+        var place = autocomplete.getPlace();
+        if (!place.place_id) {
         return;
-      }
-      geocoder.geocode({'placeId': place.place_id}, function(results, status) {
+        }
+        geocoder.geocode({'placeId': place.place_id}, function(results, status) {
 
         if (status !== 'OK') {
           window.alert('Geocoder failed due to: ' + status);
@@ -103,181 +104,89 @@ function initMap() {
         infowindow.open(map, marker);
         console.log('검색 후 데이터 수집중');
         requestData(results[0].geometry.location.lat(), results[0].geometry.location.lng());
-      });
+        });
     });
-  }
+}
 
 
-  function requestData(lat, lng, page = 10) {
-      new Promise((resolve, reject) => {
+function requestData(lat, lng, page = 10) {
+    new Promise((resolve, reject) => {
         $.ajax({
-            url: `https://api.meetup.com/find/upcoming_events?photo-host=public&page=${page}&sig_id=271259792&fields=event_hosts&lon=${lng}&lat=${lat}&sig=a8d009fde3a08ea8f77a6132165d9092d4202245`,
+            url: `https://api.meetup.com/find/upcoming_events?photo-host=public&page=${page}&sig_id=271259792&fields=event_hosts%2C+featured_photo&lon=${lng}&lat=${lat}&sig=0ed587ea0a9a01c606e5de12ae751fac915d9214`,
             dataType: 'jsonp',
-            success: function(data) {console.log('왔다!',data); resolve(data)},
+            success: function(data) {console.log('왔다!',data.data.events); resolve(data)},
             error: function(err) {console.log('에러ㅠ',err); reject(err)}
         })
-      }).then(data => {
-          var event = data.data.events[0];
-          console.log('이벤트이름: ',event.name);
-          console.log('그룹이름: ', event.group.name);
-          console.log('이벤트날짜,시간: ', event.local_data, event.local_time);
-          console.log('인원: ', event.yes_rsvp_count);
-          if (event.visibility === 'public') {
-            console.log('호스트이름: ', event.event_hosts[0].name);
-          }
-      })
-  };
+    }).then(data => {
+        var events = data.data.events;
+        if (events.length) {
+            deleteMarkers();
 
-//   https://api.meetup.com/find/upcoming_events?photo-host=public&page=${page}&sig_id=271259792&fields=event_hosts&lon=${lng}&lat=${lat}&sig=a8d009fde3a08ea8f77a6132165d9092d4202245
+            for (let i = 0; i < events.length; i++) {
+                if (events[i].venue) {
+                    let latLng = {lat: events[i].venue.lat, lng: events[i].venue.lon}
+                    // let marker = new google.maps.Marker({
+                    //     position: latLng,
+                    //     map: map
+                    // });
+                    // markers.push(marker);
+                    addMarkerWithTimeout(latLng, i * 150, i, events);
+                }
+            }
+        }
+    });
+};
 
-
-// https://api.meetup.com/find/upcoming_events?&sign=true&photo-host=public&lon=${lng}&page=${page}&lat=${lat}
-// https://api.meetup.com/find/upcoming_events?photo-host=public&page=${page}&sig_id=271259792&lon=${lng}&lat=${lat}&sig=7ad75514ef47c407423c67144c2d14f4d703bdb3
-
-
-
-//   https://api.meetup.com/find/upcoming_events?photo-host=public&page=10&text=beer&sig_id=271259792&radius=smart&lon=-74.004013&lat=40.714047&sig=ac91a4756b43db79c14952a5a4a9951c62ceaabd
-  
-
-//   https://api.meetup.com/find/upcoming_events?&sign=true&photo-host=public&lon=${lng}&page=${page}&lat=${lat}
-// https://api.meetup.com/find/upcoming_events?key=ABDE12456AB2324445&photo-host=public&lon=${lng}&page=${page}&lat=${lat}
-
+var icon = {
+    url: 'https://www.pacificrimvisitor.ca/wp-content/uploads/2017/04/flag.png',
+    scaledSize: new google.maps.Size(50, 50)
+}
 
 
 
-// initMap();
-// function initMap() {
-//     var map = new google.maps.Map(document.getElementById('map'), {
-//       zoom: 12,
-//       center: {lat: 37.530, lng: 127.005}
-//     });
-//     // 37.504464, 127.024415
-//     var geocoder = new google.maps.Geocoder();
-
-//     document.getElementById('submit').addEventListener('click', function() {
-//       geocodeAddress(geocoder, map);
-//     });
-//   }
-
-//   function geocodeAddress(geocoder, resultsMap) {
-//     var address = document.getElementById('address').value;
-//     geocoder.geocode({'address': address}, function(results, status) {
-//       if (status === 'OK') {
-//         resultsMap.setCenter(results[0].geometry.location);
-//         var marker = new google.maps.Marker({
-//           map: resultsMap,
-//           position: results[0].geometry.location
-//         });
-//       } else {
-//         alert('Geocode was not successful for the following reason: ' + status);
-//       }
-//     });
-//   }
-
-
-
-
-// initialize();
-
-// var map;
-// var service;
-// var infowindow;
-
-// function initialize() {
-//   var pyrmont = new google.maps.LatLng(-33.8665433,151.1956316);
-
-//   map = new google.maps.Map(document.getElementById('map'), {
-//       center: pyrmont,
-//       zoom: 15
-//     });
-
-//   var request = {
-//     location: pyrmont,
-//     radius: '500',
-//     query: 'restaurant'
-//   };
-
-//   service = new google.maps.places.PlacesService(map);
-//   service.textSearch(request, callback);
-// }
-
-// function callback(results, status) {
-//   if (status == google.maps.places.PlacesServiceStatus.OK) {
-//     for (var i = 0; i < results.length; i++) {
-//       var place = results[i];
-//       createMarker(results[i]);
-//     }
-//   }
-// }
-
-
-
-
-
-
-
-
-// var map;
-// initMap();
-
-// function initMap() {
-//   // Create the map.
-//   var pyrmont = {lat: -33.866, lng: 151.196};
-//   map = new google.maps.Map(document.getElementById('map'), {
-//     center: pyrmont,
-//     zoom: 17
-//   });
-
-//   // Create the places service.
-//   var service = new google.maps.places.PlacesService(map);
-//   var getNextPage = null;
-//   var moreButton = document.getElementById('more');
-//   moreButton.onclick = function() {
-//     moreButton.disabled = true;
-//     if (getNextPage) getNextPage();
-//   };
-
-//   // Perform a nearby search.
-//   service.nearbySearch(
-//       {location: pyrmont, radius: 500, type: ['store']},
-//       function(results, status, pagination) {
-//         if (status !== 'OK') return;
-
-//         createMarkers(results);
-//         moreButton.disabled = !pagination.hasNextPage;
-//         getNextPage = pagination.hasNextPage && function() {
-//           pagination.nextPage();
-//         };
-//       });
-//     }
-
-    function createMarkers(places) {
-      var bounds = new google.maps.LatLngBounds();
-      var placesList = document.getElementById('places');
-    
-      for (var i = 0, place; place = places[i]; i++) {
-        var image = {
-          url: place.icon,
-          size: new google.maps.Size(71, 71),
-          origin: new google.maps.Point(0, 0),
-          anchor: new google.maps.Point(17, 34),
-          scaledSize: new google.maps.Size(25, 25)
-        };
-    
-        var marker = new google.maps.Marker({
-          map: map,
-          icon: image,
-          title: place.name,
-          position: place.geometry.location
+function addMarkerWithTimeout(position, timeout, index, events) {
+    setTimeout(function() {
+        let venueMarker = new google.maps.Marker({
+            position: position,
+            map: map,
+            icon: icon,
+            animation: google.maps.Animation.DROP
         });
-    
-        var li = document.createElement('li');
-        li.textContent = place.name;
-        placesList.appendChild(li);
-    
-        bounds.extend(place.geometry.location);
-      }
-      map.fitBounds(bounds);
-    }
+        venueMarker.addListener('click', function(e) {
+            // infowindow.open();
+            console.log(e);
+            console.log(index);
+            console.log(events[index].name);
 
+            var infowindow = new google.maps.InfoWindow({
+                content: events[index].name
+            });
+
+            infowindow.open(map, venueMarker);
+        });
+        
+        markers.push({index, venueMarker});
+        console.log('markers',markers);
+    }, timeout);
+}
+
+function deleteMarkers() {
+    setMarkers(null);
+    markers = [];
+    console.log('3',markers);
+}
+
+function setMarkers(map) {
+    console.log('1',markers);
+    // debugger
+    for (let i = 0; i < markers.length; i++) {
+        markers[i].setMap(map);
+    }
+    console.log('2',markers);
+}
+
+
+
+
+//   https://api.meetup.com/find/upcoming_events?photo-host=public&page=${page}&sig_id=271259792&fields=event_hosts%2C+featured_photo&lon=${lng}&lat=${lat}&sig=0ed587ea0a9a01c606e5de12ae751fac915d9214
 
