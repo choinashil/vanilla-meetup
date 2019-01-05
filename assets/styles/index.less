@@ -3,8 +3,72 @@
 // http://www.paulirish.com/2012/box-sizing-border-box-ftw/
 html, body {
     box-sizing: border-box;
-    background-color: pink;
+    height: 100%;
+    margin: 0;
+    padding: 0;
 }
 *, *:before, *:after {
     box-sizing: inherit;
+}
+
+.mapWrapper {
+    border: 1px solie red;
+}
+
+#map {
+    float: left;
+    height: 100%;
+    width: 70%;
+    border: 5px solid yellow;
+    .gmnoprint {
+        display: none;
+    }
+}
+
+.searchBox{
+    padding: 10px;
+    border: 1px solid red;
+
+}
+
+#pac-input {
+    margin: 10px;
+    width: 300px;
+    height: 40px;
+    padding: 10px;
+    font-size: 20px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    outline: none;
+    margin-top: 10px;
+}  
+
+#floating-panel {
+position: absolute;
+top: 10px;
+left: 25%;
+z-index: 5;
+background-color: #fff;
+padding: 5px;
+border: 1px solid #999;
+text-align: center;
+font-family: 'Roboto','sans-serif';
+line-height: 30px;
+padding-left: 10px;
+}
+
+
+.list {
+    width: 300px;
+    height: 500px;
+    border: 1px solid red;
+    float: left;
+}
+
+.pointer {
+position: absolute;
+width: 30px;
+height: 30px;
+background-color: red;
 }

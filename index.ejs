@@ -3,11 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width">
+    <!-- <meta name="viewport" content="initial-scale=1.0, user-scalable=no"> -->
     <title><%= htmlWebpackPlugin.options.title %></title>
 </head>
 <body>
     <div class="content">
-        <h1>Boilerplate</h1>
+    
     </div>
+    <!-- <div id="floating-panel">
+        <input id="address" type="textbox" value="강남역">
+        <input id="submit" type="button" value="search">
+    </div> -->
+
+        <!-- <div class="searchBox">
+            <input id="search" type="text">
+        </div> -->
+        <div class="searchBox">
+            <input id="pac-input" class="controls" type="text" placeholder="Enter a location">
+        </div>
+        <!-- <input id='more' type="button" value="more"> -->
+
+        <div id="map"></div>
+
+        <div id="infowindow-content">
+            <span id="place-name"  class="title"></span>
+            <!-- <span id="place-address"></span><br> -->
+            <!-- <span id="place-id">이곳 주변을 검색하시겠습니까?</span> -->
+        </div>    
+
+    
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB-AnmcygmTHbh-T82HgX2pTEXkhkWaM00&libraries=places"></script>
 </body>
 </html>
