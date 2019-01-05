@@ -10,30 +10,18 @@ import $ from 'jquery';
 
 // f414b55d7015574938371e29587622 meetupkey
 
-
-// function searchEvent() {
-//     $.ajax({
-//         url: 'https://api.meetup.com/find/upcoming_events\?key\=f414b55d7015574938371e29587622',
-//         dataType: 'jsonp',
-//         success: function(data) {console.log(data)}
-//     })
-// }s
-
 var map;
-var markers = [];
 var marker;
+var markers = [];
+var pointMarker = [];
 
 initMap();
 
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
-        center: {lat: 55.67528613506351 , lng: 12.569255856587574},
-        zoom: 12,
+        center: {lat: 48.86100450, lng: 2.357133695},
+        zoom: 13,
     });
-
-    // 48.861004500037154 2.3571336952585398 파리
-    //  37.504464, 127.024415 강남역
-    //  40.714047, -74.004013  뉴욕
 
     var input = document.getElementById('pac-input');
 
@@ -65,17 +53,9 @@ function initMap() {
         console.log('클릭 후 데이터 수집중');
         requestData(e.latLng.lat(), e.latLng.lng());
 
-        // var latLng = e.latLng;
-        // position = {
-        //     center: {lat: e.latLng.lat(), lng: e.latLng.lng()},
-        //     zoom: 13
-        // };
-
-        // infowindow.open(map, position);
-
+        addMarker(e.latLng, map);
     });
 
-    // var marker = new google.maps.Marker({position: uluru, map: map});
 
     autocomplete.addListener('place_changed', function() {
         infowindow.close();
@@ -98,14 +78,22 @@ function initMap() {
         });
         marker.setVisible(true);
         infowindowContent.children['place-name'].textContent = place.name;
-        // infowindowContent.children['place-id'].textContent = place.place_id;
-        // infowindowContent.children['place-address'].textContent =
-        //     results[0].formatted_address;
         infowindow.open(map, marker);
         console.log('검색 후 데이터 수집중');
         requestData(results[0].geometry.location.lat(), results[0].geometry.location.lng());
         });
     });
+}
+
+function addMarker(location, map) {
+    deletePointMarker();
+    deleteMarkers();
+    console.log('pointMarker', pointMarker);
+    marker = new google.maps.Marker({
+        position: location,
+        map: map
+    });
+    pointMarker.push(marker);
 }
 
 
@@ -120,16 +108,9 @@ function requestData(lat, lng, page = 10) {
     }).then(data => {
         var events = data.data.events;
         if (events.length) {
-            deleteMarkers();
-
             for (let i = 0; i < events.length; i++) {
                 if (events[i].venue) {
                     let latLng = {lat: events[i].venue.lat, lng: events[i].venue.lon}
-                    // let marker = new google.maps.Marker({
-                    //     position: latLng,
-                    //     map: map
-                    // });
-                    // markers.push(marker);
                     addMarkerWithTimeout(latLng, i * 150, i, events);
                 }
             }
@@ -137,26 +118,24 @@ function requestData(lat, lng, page = 10) {
     });
 };
 
+
 var icon = {
     url: 'https://www.pacificrimvisitor.ca/wp-content/uploads/2017/04/flag.png',
     scaledSize: new google.maps.Size(50, 50)
 }
-
-
 
 function addMarkerWithTimeout(position, timeout, index, events) {
     setTimeout(function() {
         let venueMarker = new google.maps.Marker({
             position: position,
             map: map,
-            icon: icon,
+            // icon: icon,
             animation: google.maps.Animation.DROP
         });
         venueMarker.addListener('click', function(e) {
-            // infowindow.open();
-            console.log(e);
             console.log(index);
             console.log(events[index].name);
+            console.log(venueMarker);
 
             var infowindow = new google.maps.InfoWindow({
                 content: events[index].name
@@ -164,25 +143,31 @@ function addMarkerWithTimeout(position, timeout, index, events) {
 
             infowindow.open(map, venueMarker);
         });
-        
-        markers.push({index, venueMarker});
-        console.log('markers',markers);
+        markers.push(venueMarker);
+        console.log('markers', markers);
     }, timeout);
 }
 
 function deleteMarkers() {
     setMarkers(null);
     markers = [];
-    console.log('3',markers);
 }
 
 function setMarkers(map) {
-    console.log('1',markers);
-    // debugger
     for (let i = 0; i < markers.length; i++) {
         markers[i].setMap(map);
     }
-    console.log('2',markers);
+}
+
+function deletePointMarker() {
+    setPointMarker(null);
+    pointMarker = [];
+}
+
+function setPointMarker(map) {
+    for (let i = 0; i < pointMarker.length; i++) {
+        pointMarker[i].setMap(map);
+    }
 }
 
 
