@@ -12,8 +12,9 @@ import $ from 'jquery';
 
 var map;
 var marker;
+var pointer = [];
 var markers = [];
-var pointMarker = [];
+const info = document.querySelector('.info');
 
 initMap();
 
@@ -44,16 +45,10 @@ function initMap() {
 
 
     map.addListener('click', function (e) {
-        //lat and lng is available in e object
+        addPointer(e.latLng, map);
         console.log(e.latLng.lat(), e.latLng.lng());
-
-        var pointer = document.createElement('div');
-        pointer.classList.add('pointer');
-        // pointer.style.left =
         console.log('클릭 후 데이터 수집중');
         requestData(e.latLng.lat(), e.latLng.lng());
-
-        addMarker(e.latLng, map);
     });
 
 
@@ -85,15 +80,15 @@ function initMap() {
     });
 }
 
-function addMarker(location, map) {
-    deletePointMarker();
+function addPointer(location, map) {
+    deletePointer();
     deleteMarkers();
-    console.log('pointMarker', pointMarker);
+    console.log('pointer', pointer);
     marker = new google.maps.Marker({
         position: location,
         map: map
     });
-    pointMarker.push(marker);
+    pointer.push(marker);
 }
 
 
@@ -114,9 +109,70 @@ function requestData(lat, lng, page = 10) {
                     addMarkerWithTimeout(latLng, i * 150, i, events);
                 }
             }
+            // console.log('element만들준비..이벤트갯수', events.length);
+            showList(events);
         }
     });
 };
+
+function showList(events) {
+    // 쌓이는거 리셋한 후에 만들기
+    while ( info.childElementCount ) { 
+        info.removeChild( info.firstElementChild ); 
+    } 
+
+    console.log('이벤트갯수', events.length);
+    console.log('도착한 event data:', events);
+    for (let i = 0; i < events.length; i++) {
+        const event = document.createElement('div');
+        event.classList.add('event');
+        const hostInfo = document.createElement('div');
+        const imgWrapper = document.createElement('div');
+        const hostImg = document.createElement('img');
+        const hostName = document.createElement('span');
+        if (events[i].event_hosts) {
+            hostImg.src = events[i].event_hosts[0].photo.highres_link;
+            hostName.textContent = events[i].event_hosts[0].name;
+        }
+        imgWrapper.appendChild(hostImg);
+        hostInfo.appendChild(imgWrapper);
+        hostInfo.appendChild(hostName);
+        event.appendChild(hostInfo);
+
+        const eventInfo = document.createElement('div');
+        const eventTitle = document.createElement('span');
+        const eventGroup = document.createElement('span');
+        const eventDate = document.createElement('span');
+        const eventRsvp = document.createElement('span');
+        const dateAndTime = events[i].local_date + ' ' + events[i].local_time;
+        eventTitle.textContent = events[i].name;
+        eventGroup.textContent = events[i].group.name;
+        eventDate.textContent = dateAndTime;
+        eventRsvp.textContent = events[i].yes_rsvp_count + '명 참석';
+        eventInfo.appendChild(eventTitle);
+        eventInfo.appendChild(eventGroup);
+        eventInfo.appendChild(eventDate);
+        eventInfo.appendChild(eventRsvp);
+        event.appendChild(eventInfo);
+
+        const additionalInfo = document.createElement('div');
+        const dDay = document.createElement('span');
+        const link = document.createElement('div');
+        // dDay.textContent = 
+        link.textContent = '참석하기';
+        
+        const eventLink = document.createElement('a');
+        // eventlink.setAttribute('class', 'signature');
+        eventLink.setAttribute('href', events[i].link);
+        link.appendChild(eventLink);
+
+        additionalInfo.appendChild(dDay);
+        additionalInfo.appendChild(link);
+        event.appendChild(additionalInfo);
+
+        info.appendChild(event);
+    }
+}
 
 
 var icon = {
@@ -133,9 +189,9 @@ function addMarkerWithTimeout(position, timeout, index, events) {
             animation: google.maps.Animation.DROP
         });
         venueMarker.addListener('click', function(e) {
-            console.log(index);
-            console.log(events[index].name);
-            console.log(venueMarker);
+            // console.log(index);
+            // console.log(events[index].name);
+            // console.log(venueMarker);
 
             var infowindow = new google.maps.InfoWindow({
                 content: events[index].name
@@ -144,34 +200,35 @@ function addMarkerWithTimeout(position, timeout, index, events) {
             infowindow.open(map, venueMarker);
         });
         markers.push(venueMarker);
-        console.log('markers', markers);
+        // console.log('markers', markers);
     }, timeout);
 }
 
 function deleteMarkers() {
-    setMarkers(null);
+    markers.forEach(marker => marker.setMap(null));
     markers = [];
 }
 
-function setMarkers(map) {
-    for (let i = 0; i < markers.length; i++) {
-        markers[i].setMap(map);
-    }
+function deletePointer() {
+    pointer.forEach(p => p.setMap(null));
+    pointer = [];
 }
 
-function deletePointMarker() {
-    setPointMarker(null);
-    pointMarker = [];
-}
-
-function setPointMarker(map) {
-    for (let i = 0; i < pointMarker.length; i++) {
-        pointMarker[i].setMap(map);
-    }
-}
 
 
 
 
 //   https://api.meetup.com/find/upcoming_events?photo-host=public&page=${page}&sig_id=271259792&fields=event_hosts%2C+featured_photo&lon=${lng}&lat=${lat}&sig=0ed587ea0a9a01c606e5de12ae751fac915d9214
 
+
+
+// 화분 https://images.unsplash.com/photo-1511949817959-d24d516a8f8e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80
+// 그림 https://images.unsplash.com/photo-1518774968953-dfb65a8874ea?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1349&q=80
+// 캠핑 https://images.unsplash.com/photo-1535700601052-b90a78c466f5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1340&q=80
+// 사람들 https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80
+// 신난사람들 https://images.unsplash.com/photo-1511988617509-a57c8a288659?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1351&q=80
+// 식탁앞 사람들 https://images.unsplash.com/photo-1519671282429-b44660ead0a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80
+// 춤추는 사람들 https://images.unsplash.com/photo-1469488865564-c2de10f69f96?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80
+// 불꽃놀이 https://images.unsplash.com/photo-1439539698758-ba2680ecadb9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80
+// 와인 https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80
+// 뛰는 사람들 https://images.unsplash.com/photo-1525026198548-4baa812f1183?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1233&q=80
