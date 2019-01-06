@@ -12,12 +12,14 @@ import $ from 'jquery';
 
 var map;
 var marker;
-var pointer = [];
-var markers = [];
+let pointer = [];
+let markers = [];
+let isRequesting = false;
 var infowindow;
 var infowindowContent;
+let recentData;
 const info = document.querySelector('.info');
-const favoriteButton = document.querySelector('.favoriteButton');
+const setting = document.querySelector('.setting');
 
 initMap();
 
@@ -115,53 +117,105 @@ function addPointer(location, map) {
 
 
 function requestData(lat, lng, page = 10) {
-    new Promise((resolve, reject) => {
-        $.ajax({
-            url: `https://api.meetup.com/find/upcoming_events?photo-host=public&page=${page}&sig_id=271259792&fields=event_hosts%2C+featured_photo&lon=${lng}&lat=${lat}&sig=0ed587ea0a9a01c606e5de12ae751fac915d9214`,
-            dataType: 'jsonp',
-            success: function(data) {console.log('왔다!',data.data); resolve(data)},
-            error: function(err) {console.log('에러ㅠ',err); reject(err)}
-        })
-    }).then(data => {
-        var events = data.data.events;
-        if (events.length) {
-            for (let i = 0; i < events.length; i++) {
-                if (events[i].venue) {
-                    let latLng = {lat: events[i].venue.lat, lng: events[i].venue.lon}
-                    dropMarkers(latLng, i * 150, i, events);
+    if (!isRequesting) {
+        new Promise((resolve, reject) => { 
+            isRequesting = true;
+            $.ajax({
+                url: `https://api.meetup.com/find/upcoming_events?photo-host=public&page=${page}&sig_id=271259792&fields=event_hosts%2C+featured_photo&lon=${lng}&lat=${lat}&sig=0ed587ea0a9a01c606e5de12ae751fac915d9214`,
+                dataType: 'jsonp',
+                success: function(rawData) {console.log('왔다!',rawData.data); resolve(rawData)},
+                error: function(err) {console.log('에러ㅠ',err); reject(err)}
+            })
+        }).then(rawData => {
+            let data = rawData.data;
+            recentData = data;
+            if (data.events.length) {
+                for (let i = 0; i < data.events.length; i++) {
+                    if (data.events[i].venue) {
+                        let latLng = {lat: data.events[i].venue.lat, lng: data.events[i].venue.lon}
+                        dropMarkers(latLng, i * 150, i, data.events);
+                    }
                 }
             }
-            // console.log('element만들준비..이벤트갯수', events.length);
-        }
-        showList(events);
-    });
+            showList(data);
+        }).catch(err => {
+            // alert(err);
+        });    
+    }
 };
 
-favoriteButton.addEventListener('click', showFavorite);
+setting.children[0].addEventListener('click', () => showList(recentData));
+setting.children[1].addEventListener('click', () => showFavorites());
 
-function showFavorite(e) {
-    e.target.classList.add('selected');
-};
 
-function showList(events) {
-    // 쌓이는거 리셋한 후에 만들기
-    while ( info.childElementCount > 1 ) { 
-        info.removeChild( info.lastElementChild ); 
+function showFavorites() {
+    setting.classList.remove('show-list');
+    setting.classList.add('show-favorites');
+    info.classList.remove('info-list');
+    info.classList.add('info-favorites');
+
+    while (info.childElementCount > 1) { 
+        info.removeChild(info.lastElementChild); 
     } 
+    // console.log(localStorage);
 
-    if (events.length) {
-        // console.log('이벤트갯수', events.length);
-        // console.log('도착한 event data:', events);
-        for (let i = 0; i < events.length; i++) {
+    for (let i = 0; i < localStorage.length - 1; i++) {
+        // console.log(JSON.parse(Object.values(localStorage)[i]));
+        let favData = JSON.parse(Object.values(localStorage)[i]);
+        console.log(i);
+        if (!favData.featured_photo) {
+            console.log('없어');
+            favData.featured_photo = 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80';
+        }
+        const favMarkup = `
+        <div class="fav">
+            <div>
+                <img src="${favData.featured_photo.photo_link}">
+                <div>
+                    <span>${favData.name}</span>
+                </div>
+                <img src='https://postfiles.pstatic.net/MjAxOTAxMDdfMTIy/MDAxNTQ2ODA3NTI1NzY2.RskCx8ubPA4maS8GQ5rynPb2_q2xSTlDj9mjadqc2lgg.9pKiY1GLgdO3zYj4TNRtxwSvedqpigHgNWZSBHp2dDcg.PNG.choinashil/basics-15-512.png?type=w773' class="delete-fav">
+            </div>
+            <div>
+                <span>by</span>
+                <span>${favData.group.name}</span><br>
+                <span>${favData.local_date} ${favData.local_time}</span>
+                <span>in</span>
+                <span>${favData.venue.city}</span>
+            </div>
+        </div>`
+        info.insertAdjacentHTML('afterend', favMarkup);
+    }
+
+};
+
+function showList(data) {
+    isRequesting = false;
+
+    setting.classList.remove('show-favorites');
+    setting.classList.add('show-list');
+    info.classList.remove('info-favorites');
+    info.classList.add('info-list');
+    
+
+    console.log('data', data);
+
+    while (info.childElementCount > 1) { 
+        info.removeChild(info.lastElementChild); 
+    } 
+    if (data.events && data.events.length) {
+        // console.log('이벤트갯수', data.events.length);
+        // console.log('도착한 event data:', data.events);
+        for (let i = 0; i < data.events.length; i++) {
             const event = document.createElement('div');
             event.classList.add('event');
             const hostInfo = document.createElement('div');
             const imgWrapper = document.createElement('div');
             const hostImg = document.createElement('img');
             const hostName = document.createElement('span');
-            if (events[i].event_hosts && events[i].event_hosts[0].photo) {
-                hostImg.src = events[i].event_hosts[0].photo.photo_link;
-                hostName.textContent = events[i].event_hosts[0].name;
+            if (data.events[i].event_hosts && data.events[i].event_hosts[0].photo) {
+                hostImg.src = data.events[i].event_hosts[0].photo.photo_link;
+                hostName.textContent = data.events[i].event_hosts[0].name;
             } else {
                 hostImg.src = 'https://www.smallstreammedia.nl/workspace/assets/images/empty_profile.png';
             }
@@ -175,11 +229,11 @@ function showList(events) {
             const eventGroup = document.createElement('span');
             const eventDate = document.createElement('span');
             const eventRsvp = document.createElement('span');
-            const dateAndTime = events[i].local_date + ' ' + events[i].local_time;
-            eventTitle.textContent = events[i].name;
-            eventGroup.textContent = events[i].group.name;
+            const dateAndTime = data.events[i].local_date + ' ' + data.events[i].local_time;
+            eventTitle.textContent = data.events[i].name;
+            eventGroup.textContent = data.events[i].group.name;
             eventDate.textContent = dateAndTime;
-            eventRsvp.textContent = 'RSVP ' + events[i].yes_rsvp_count;
+            eventRsvp.textContent = 'RSVP ' + data.events[i].yes_rsvp_count;
             eventInfo.appendChild(eventTitle);
             eventInfo.appendChild(eventGroup);
             eventInfo.appendChild(eventDate);
@@ -188,15 +242,15 @@ function showList(events) {
 
             const additionalInfo = document.createElement('div');
             const dDay = document.createElement('span');
-            const favorite = document.createElement('div');
+            const favorites = document.createElement('div');
             const addEvent = document.createElement('img');
             const link = document.createElement('div');
             // dDay.textContent = 
             addEvent.src = 'https://cdn0.iconfinder.com/data/icons/slim-square-icons-basics/100/basics-15-512.png';
             addEvent.addEventListener('click', function(e) {
-                addFavorite(e, i, events);
+                addFavorites(e, i, data.events);
             });
-            favorite.appendChild(addEvent);
+            favorites.appendChild(addEvent);
             link.textContent = 'JOIN';
             // const eventLink = document.createElement('a');
             // eventlink.setAttribute('class', 'signature');
@@ -204,17 +258,23 @@ function showList(events) {
             // link.appendChild(eventLink);
 
             additionalInfo.appendChild(dDay);
-            additionalInfo.appendChild(favorite);
+            additionalInfo.appendChild(favorites);
             additionalInfo.appendChild(link);
             event.appendChild(additionalInfo);
 
             info.appendChild(event);
         }
+    } else {
+        const noResult = document.createElement('div');
+        noResult.classList.add('noResult');
+        noResult.textContent = `There is no meetup in ${data.city.city}!`;
+        info.appendChild(noResult);
     }
+
 }
 
 
-function addFavorite(e, i, events) {
+function addFavorites(e, i, events) {
     console.log(events[i].id);
     console.log(events[i]);
     console.log('storage', localStorage);
