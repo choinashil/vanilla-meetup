@@ -1,6 +1,9 @@
 // Apply a natural box layout model to all elements
 // but allowing components to change
 // http://www.paulirish.com/2012/box-sizing-border-box-ftw/
+$point: #da5252;
+
+
 html, body {
     box-sizing: border-box;
     height: 100vh;
@@ -19,7 +22,7 @@ html, body {
     padding: 0 20px;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid rgba(0, 0, 0, .5);
+    // border-bottom: 1px solid rgba(0, 0, 0, .5);
 
     
     .title {
@@ -38,26 +41,24 @@ html, body {
 .intro {
     // background-color: powderblue;
     width: 100%;
-    height: 40px;
+    // height: 100px;
 }
 
 .content {
     // border: 5px solid orange;
-    border-top: 1px solid rgba(0, 0, 0, .5);
-    border-bottom: 1px solid rgba(0, 0, 0, .5);
+    border-top: 1px solid rgba(0, 0, 0, .2);
+    border-bottom: 1px solid rgba(0, 0, 0, .2);
     width: 100%;
-    height: 560px;
+    height: 640px;
 }
 
 
 .googleMap{
-    // margin: 50px 0px 0px 30px;
     // border: 3px solid orange;
     width: 60%;
     // height: calc(100% - 150px);
     height: 100%;
-    // box-shadow: 2px 3px 5px rgba(0, 0, 0, .5);
-    border-right: 1px solid rgba(0, 0, 0, .5);
+    border-right: 1px solid rgba(0, 0, 0, .2);
     float: left;
 }
 
@@ -65,29 +66,25 @@ html, body {
     height: 100%;
     width: 100%;
     position: relative;
-
-    .gmnoprint {
-        display: none;
-    }
-    .controls {
-        // border: 1px solid rgba(0, 0, 0, .2);
-        border: none;
-        box-shadow: 2px 3px 2px rgba(0, 0, 0, .2);
-        transform: translateX(-17px);
-    }
 }
 
-#pac-input {
-    margin: 10px;
+.controls {
+    margin-left: 30px;
+    margin-top: 10px;
     width: 300px;
     height: 40px;
     padding: 10px;
     font-size: 20px;
-    position: absolute;
     outline: none;
-    margin-top: 10px;
+    border: none;
+    box-shadow: 2px 3px 2px rgba(0, 0, 0, .2);
+    transform: translateX(-17px);
     // font-family: 'Kaushan Script', cursive;
 }  
+
+.w40 {
+    width: 50%;
+}
 
 .info {
     // box-sizing: none;
@@ -104,6 +101,31 @@ html, body {
     // width: 100px;
     // height: 100px;
     // float: left;
+    .setting {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-shrink: 0;
+        width: 100%;
+        height: 50px;
+        // background-color: pink;
+        border-bottom: 1px solid rgba(0, 0, 0, .2);
+        i {
+            margin-right: 20px;
+            color: #777;
+            cursor: pointer;
+            &:hover {
+                color: $point;
+                // transition: color .3s;
+            }
+        }
+        i:nth-child(1) {
+            font-size: 28px;
+        }
+        i:nth-child(2) {
+            font-size: 30px;
+        }
+    }
 }
 
 .event {
@@ -116,12 +138,14 @@ html, body {
     border-bottom: 1px solid rgba(0, 0, 0, .2);
     padding: 15px 25px;
     > div:nth-child(1) {
+        width: 25%;
         // border: 1px solid green;
         display: flex;
         flex-direction: column;
         align-items: center;
         // padding: 0 10px;
         // margin-right: 15px;
+        word-break: break-all;
         div {
             // border: 2px solid blue;
             width: 80px;
@@ -131,9 +155,16 @@ html, body {
             text-align: center;
             margin-bottom: 10px;
             img {
-                width: 100px;
+                display: block;
+                margin: auto;
+                max-width: 100%;
                 height: auto;
-            }    
+            }
+        }
+        span {
+            // background-color: pink;
+            text-align: center;
+
         }
     }
     > div:nth-child(2) {
@@ -142,6 +173,8 @@ html, body {
         margin: 0 15px;
         span {
             display: block;
+            word-break: break-all;
+
         }
         span:nth-child(1) {
             // border: 1px solid green;
@@ -166,16 +199,46 @@ html, body {
         //     font-size: 13px;
         //     margin-bottom: 3px;
         // }       
-        div {
+        > div:nth-child(2) {
+            img {
+                width: 50px;
+                // border: 1px solid red;
+                cursor: pointer;
+                // &:hover {
+                //     animation: spin .5s ease;
+                // }
+            }
+        }
+        > div:nth-child(3) {
             border: 1px solid #000;
-            padding: 5px 5px 3px 5px;
-            font-size: 13px;
+            padding: 4px 9px 2px 9px;
+            font-size: 15px;
             cursor: pointer;
             &:hover {
-                border: 1px solid #db5959;
-                color: #db5959;
+                border: 1px solid $point;
+                color: $point;
             }
         }
     }
+}
+
+.add-event {
+    transform: rotate(45deg);
+    transition: transform .2s ease-in-out;
+    // animation: spin .5s ease;
+}
+
+.remove-event {
+    transform: rotate(0);
+    transition: transform .2s ease-in-out;
+}
+
+@keyframes spin {
+    // 0% {transform: rotate(0deg);}
+    100% {transform: rotate(45deg);}
+}
+
+.selected {
+    color: $point;
 }
 

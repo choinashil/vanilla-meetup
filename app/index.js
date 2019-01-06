@@ -14,26 +14,43 @@ var map;
 var marker;
 var pointer = [];
 var markers = [];
+var infowindow;
+var infowindowContent;
 const info = document.querySelector('.info');
+const favoriteButton = document.querySelector('.favoriteButton');
 
 initMap();
 
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
-        center: {lat: 48.86100450, lng: 2.357133695},
-        zoom: 13,
+        center: {lat: 51.46, lng: -2.6},
+        zoom: 14,
+        mapTypeControl: false,
+        streetViewControl: false
     });
 
-    var input = document.getElementById('pac-input');
+    // var inputInIntro = document.getElementById('input-in-intro');
+
+    // var autocomplete2 = new google.maps.places.Autocomplete(
+    //     inputInIntro, {placeIdOnly: true});
+
+    // autocomplete2.bindTo('bounds', map);
+
+
+    var inputInTheMap = document.getElementById('input-in-the-map');
 
     var autocomplete = new google.maps.places.Autocomplete(
-        input, {placeIdOnly: true});
+        inputInTheMap, {placeIdOnly: true});
+    
     autocomplete.bindTo('bounds', map);
+    // Bind the map's bounds (viewport) property to the autocomplete object,
+    // so that the autocomplete requests use the current map bounds for the
+    // bounds option in the request.
 
-    map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+    map.controls[google.maps.ControlPosition.TOP_LEFT].push(inputInTheMap);
 
-    var infowindow = new google.maps.InfoWindow();
-    var infowindowContent = document.getElementById('infowindow-content');
+    infowindow = new google.maps.InfoWindow();
+    infowindowContent = document.getElementById('infowindow-content');
     infowindow.setContent(infowindowContent);
     var geocoder = new google.maps.Geocoder;
     marker = new google.maps.Marker({
@@ -45,6 +62,7 @@ function initMap() {
 
 
     map.addListener('click', function (e) {
+
         addPointer(e.latLng, map);
         console.log(e.latLng.lat(), e.latLng.lng());
         console.log('클릭 후 데이터 수집중');
@@ -55,25 +73,30 @@ function initMap() {
     autocomplete.addListener('place_changed', function() {
         infowindow.close();
         var place = autocomplete.getPlace();
+        // getPlace() 리턴값은 객체. name, place_id, types로 이루어져있음 
+        console.log('place',place);
         if (!place.place_id) {
-        return;
+            return;
         }
         geocoder.geocode({'placeId': place.place_id}, function(results, status) {
-
+        console.log('results',results);
         if (status !== 'OK') {
-          window.alert('Geocoder failed due to: ' + status);
-          return;
+            window.alert('Geocoder failed due to: ' + status);
+            return;
         }
-        map.setZoom(15);
+        map.setZoom(13);
         map.setCenter(results[0].geometry.location);
+
         // Set the position of the marker using the place ID and location.
-        marker.setPlace({
-          placeId: place.place_id,
-          location: results[0].geometry.location
-        });
-        marker.setVisible(true);
-        infowindowContent.children['place-name'].textContent = place.name;
-        infowindow.open(map, marker);
+        // marker.setPlace({
+        //   placeId: place.place_id,
+        //   location: results[0].geometry.location
+        // });
+        // marker.setVisible(true);
+        addPointer(results[0].geometry.location, map);
+
+        infowindowContent.children['place-name'].textContent = `${place.name} 주변의 검색결과입니다`;
+        infowindow.open(map, marker);   
         console.log('검색 후 데이터 수집중');
         requestData(results[0].geometry.location.lat(), results[0].geometry.location.lng());
         });
@@ -83,7 +106,6 @@ function initMap() {
 function addPointer(location, map) {
     deletePointer();
     deleteMarkers();
-    console.log('pointer', pointer);
     marker = new google.maps.Marker({
         position: location,
         map: map
@@ -97,7 +119,7 @@ function requestData(lat, lng, page = 10) {
         $.ajax({
             url: `https://api.meetup.com/find/upcoming_events?photo-host=public&page=${page}&sig_id=271259792&fields=event_hosts%2C+featured_photo&lon=${lng}&lat=${lat}&sig=0ed587ea0a9a01c606e5de12ae751fac915d9214`,
             dataType: 'jsonp',
-            success: function(data) {console.log('왔다!',data.data.events); resolve(data)},
+            success: function(data) {console.log('왔다!',data.data); resolve(data)},
             error: function(err) {console.log('에러ㅠ',err); reject(err)}
         })
     }).then(data => {
@@ -106,81 +128,117 @@ function requestData(lat, lng, page = 10) {
             for (let i = 0; i < events.length; i++) {
                 if (events[i].venue) {
                     let latLng = {lat: events[i].venue.lat, lng: events[i].venue.lon}
-                    addMarkerWithTimeout(latLng, i * 150, i, events);
+                    dropMarkers(latLng, i * 150, i, events);
                 }
             }
             // console.log('element만들준비..이벤트갯수', events.length);
-            showList(events);
         }
+        showList(events);
     });
+};
+
+favoriteButton.addEventListener('click', showFavorite);
+
+function showFavorite(e) {
+    e.target.classList.add('selected');
 };
 
 function showList(events) {
     // 쌓이는거 리셋한 후에 만들기
-    while ( info.childElementCount ) { 
-        info.removeChild( info.firstElementChild ); 
+    while ( info.childElementCount > 1 ) { 
+        info.removeChild( info.lastElementChild ); 
     } 
 
-    console.log('이벤트갯수', events.length);
-    console.log('도착한 event data:', events);
-    for (let i = 0; i < events.length; i++) {
-        const event = document.createElement('div');
-        event.classList.add('event');
-        const hostInfo = document.createElement('div');
-        const imgWrapper = document.createElement('div');
-        const hostImg = document.createElement('img');
-        const hostName = document.createElement('span');
-        if (events[i].event_hosts) {
-            hostImg.src = events[i].event_hosts[0].photo.highres_link;
-            hostName.textContent = events[i].event_hosts[0].name;
+    if (events.length) {
+        // console.log('이벤트갯수', events.length);
+        // console.log('도착한 event data:', events);
+        for (let i = 0; i < events.length; i++) {
+            const event = document.createElement('div');
+            event.classList.add('event');
+            const hostInfo = document.createElement('div');
+            const imgWrapper = document.createElement('div');
+            const hostImg = document.createElement('img');
+            const hostName = document.createElement('span');
+            if (events[i].event_hosts && events[i].event_hosts[0].photo) {
+                hostImg.src = events[i].event_hosts[0].photo.photo_link;
+                hostName.textContent = events[i].event_hosts[0].name;
+            } else {
+                hostImg.src = 'https://www.smallstreammedia.nl/workspace/assets/images/empty_profile.png';
+            }
+            imgWrapper.appendChild(hostImg);
+            hostInfo.appendChild(imgWrapper);
+            hostInfo.appendChild(hostName);
+            event.appendChild(hostInfo);
+
+            const eventInfo = document.createElement('div');
+            const eventTitle = document.createElement('span');
+            const eventGroup = document.createElement('span');
+            const eventDate = document.createElement('span');
+            const eventRsvp = document.createElement('span');
+            const dateAndTime = events[i].local_date + ' ' + events[i].local_time;
+            eventTitle.textContent = events[i].name;
+            eventGroup.textContent = events[i].group.name;
+            eventDate.textContent = dateAndTime;
+            eventRsvp.textContent = 'RSVP ' + events[i].yes_rsvp_count;
+            eventInfo.appendChild(eventTitle);
+            eventInfo.appendChild(eventGroup);
+            eventInfo.appendChild(eventDate);
+            eventInfo.appendChild(eventRsvp);
+            event.appendChild(eventInfo);
+
+            const additionalInfo = document.createElement('div');
+            const dDay = document.createElement('span');
+            const favorite = document.createElement('div');
+            const addEvent = document.createElement('img');
+            const link = document.createElement('div');
+            // dDay.textContent = 
+            addEvent.src = 'https://cdn0.iconfinder.com/data/icons/slim-square-icons-basics/100/basics-15-512.png';
+            addEvent.addEventListener('click', function(e) {
+                addFavorite(e, i, events);
+            });
+            favorite.appendChild(addEvent);
+            link.textContent = 'JOIN';
+            // const eventLink = document.createElement('a');
+            // eventlink.setAttribute('class', 'signature');
+            // eventLink.setAttribute('href', events[i].link);
+            // link.appendChild(eventLink);
+
+            additionalInfo.appendChild(dDay);
+            additionalInfo.appendChild(favorite);
+            additionalInfo.appendChild(link);
+            event.appendChild(additionalInfo);
+
+            info.appendChild(event);
         }
-        imgWrapper.appendChild(hostImg);
-        hostInfo.appendChild(imgWrapper);
-        hostInfo.appendChild(hostName);
-        event.appendChild(hostInfo);
-
-        const eventInfo = document.createElement('div');
-        const eventTitle = document.createElement('span');
-        const eventGroup = document.createElement('span');
-        const eventDate = document.createElement('span');
-        const eventRsvp = document.createElement('span');
-        const dateAndTime = events[i].local_date + ' ' + events[i].local_time;
-        eventTitle.textContent = events[i].name;
-        eventGroup.textContent = events[i].group.name;
-        eventDate.textContent = dateAndTime;
-        eventRsvp.textContent = events[i].yes_rsvp_count + '명 참석';
-        eventInfo.appendChild(eventTitle);
-        eventInfo.appendChild(eventGroup);
-        eventInfo.appendChild(eventDate);
-        eventInfo.appendChild(eventRsvp);
-        event.appendChild(eventInfo);
-
-        const additionalInfo = document.createElement('div');
-        const dDay = document.createElement('span');
-        const link = document.createElement('div');
-        // dDay.textContent = 
-        link.textContent = '참석하기';
-        
-        const eventLink = document.createElement('a');
-        // eventlink.setAttribute('class', 'signature');
-        eventLink.setAttribute('href', events[i].link);
-        link.appendChild(eventLink);
-
-        additionalInfo.appendChild(dDay);
-        additionalInfo.appendChild(link);
-        event.appendChild(additionalInfo);
-
-        info.appendChild(event);
     }
 }
 
+
+function addFavorite(e, i, events) {
+    console.log(events[i].id);
+    console.log(events[i]);
+    console.log('storage', localStorage);
+
+    if (!e.target.classList.length || e.target.classList.contains('remove-event')) {
+        e.target.classList.remove('remove-event');
+        e.target.classList.add('add-event');
+        window.localStorage.setItem(events[i].id, JSON.stringify(events[i]));
+        console.log('넣은후storage', localStorage);
+
+    } else if (e.target.classList.contains('add-event')) {
+        e.target.classList.remove('add-event');
+        e.target.classList.add('remove-event');
+        window.localStorage.removeItem(events[i].id);
+        console.log('삭제후storage', localStorage);
+    }
+}
 
 var icon = {
     url: 'https://www.pacificrimvisitor.ca/wp-content/uploads/2017/04/flag.png',
     scaledSize: new google.maps.Size(50, 50)
 }
 
-function addMarkerWithTimeout(position, timeout, index, events) {
+function dropMarkers(position, time, index, events) {
     setTimeout(function() {
         let venueMarker = new google.maps.Marker({
             position: position,
@@ -188,20 +246,12 @@ function addMarkerWithTimeout(position, timeout, index, events) {
             // icon: icon,
             animation: google.maps.Animation.DROP
         });
-        venueMarker.addListener('click', function(e) {
-            // console.log(index);
-            // console.log(events[index].name);
-            // console.log(venueMarker);
-
-            var infowindow = new google.maps.InfoWindow({
-                content: events[index].name
-            });
-
+        venueMarker.addListener('click', function() {
+            infowindowContent.children['place-name'].textContent = events[index].name;
             infowindow.open(map, venueMarker);
         });
         markers.push(venueMarker);
-        // console.log('markers', markers);
-    }, timeout);
+    }, time);
 }
 
 function deleteMarkers() {
