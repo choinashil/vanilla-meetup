@@ -16,13 +16,15 @@ import $ from 'jquery';
 
 // f414b55d7015574938371e29587622 meetupkey
 
-var map;
-var marker;
+let map;
+let marker;
+let geocoder;
+let autocomplete;
 let pointer = [];
 let markers = [];
 let isRequesting = false;
-var infowindow;
-var infowindowContent;
+let infowindow;
+let infowindowContent;
 let recentData;
 let blank;
 let init = true;
@@ -41,50 +43,25 @@ function initMap() {
         streetViewControl: false
     });
 
-    // var inputInIntro = document.getElementById('input-in-intro');
-
-    // var autocomplete2 = new google.maps.places.Autocomplete(
-    //     inputInIntro, {placeIdOnly: true});
-
-    // autocomplete2.bindTo('bounds', map);
-
-
-    var inputInTheMap = document.getElementById('input-in-the-map');
-
-    var autocomplete = new google.maps.places.Autocomplete(
-        inputInTheMap, {placeIdOnly: true});
-    
+    const input = document.getElementById('input');
+    autocomplete = new google.maps.places.Autocomplete(input, {placeIdOnly: true});
     autocomplete.bindTo('bounds', map);
-    // Bind the map's bounds (viewport) property to the autocomplete object,
-    // so that the autocomplete requests use the current map bounds for the
-    // bounds option in the request.
-
-    map.controls[google.maps.ControlPosition.TOP_LEFT].push(inputInTheMap);
 
     infowindow = new google.maps.InfoWindow();
     infowindowContent = document.getElementById('infowindow-content');
     infowindow.setContent(infowindowContent);
-    var geocoder = new google.maps.Geocoder;
-    marker = new google.maps.Marker({
-        map: map
-    });
-    // marker.addListener('click', function() {
-    //     infowindow.open(map, marker);
-    // });
-
+    geocoder = new google.maps.Geocoder;
 
     map.addListener('click', function (e) {
-
+        input.value = '';
         addPointer(e.latLng, map);
-        console.log(e.latLng.lat(), e.latLng.lng());
-        console.log('클릭 후 데이터 수집중');
         requestData(e.latLng.lat(), e.latLng.lng());
+        console.log(e.latLng.lat(), e.latLng.lng());
     });
-
 
     autocomplete.addListener('place_changed', function() {
         infowindow.close();
-        var place = autocomplete.getPlace();
+        let place = autocomplete.getPlace();
         // getPlace() 리턴값은 객체. name, place_id, types로 이루어져있음 
         console.log('place',place);
         if (!place.place_id) {
@@ -99,17 +76,11 @@ function initMap() {
         map.setZoom(13);
         map.setCenter(results[0].geometry.location);
 
-        // Set the position of the marker using the place ID and location.
-        // marker.setPlace({
-        //   placeId: place.place_id,
-        //   location: results[0].geometry.location
-        // });
-        // marker.setVisible(true);
         addPointer(results[0].geometry.location, map);
 
-        infowindowContent.children['place-name'].textContent = `${place.name} 주변의 검색결과입니다`;
-        infowindow.open(map, marker);   
-        console.log('검색 후 데이터 수집중');
+        console.log(place.name);
+        // infowindowContent.children['place-name'].textContent = `${place.name} 주변의 검색결과입니다`;
+        // infowindow.open(map, marker);
         requestData(results[0].geometry.location.lat(), results[0].geometry.location.lng());
         });
     });
@@ -118,11 +89,27 @@ function initMap() {
 function addPointer(location, map) {
     deletePointer();
     deleteMarkers();
-    marker = new google.maps.Marker({
-        position: location,
-        map: map
+    // marker = new google.maps.Marker({
+    //     position: location,
+    //     map: map
+    // });
+    console.log('클릭한 위치', location);
+
+    geocoder.geocode({'location': location}, function(results, status) {
+        if (status === 'OK') {
+            if (results[0]) {
+                marker = new google.maps.Marker({
+                    position: location,
+                    map: map
+                });
+                pointer.push(marker);
+            } else {
+                window.alert('No results found');
+            }
+        } else {
+            window.alert('Geocoder failed due to: ' + status);
+        }
     });
-    pointer.push(marker);
 }
 
 
@@ -145,11 +132,9 @@ function requestData(lat, lng, page = 10) {
                     data.city.country = data.city.country.toUpperCase();
                     if (data.events[i].venue) {
                         let latLng = {lat: data.events[i].venue.lat, lng: data.events[i].venue.lon}
-                        dropMarkers(latLng, i * 150, i, data.events);
+                        dropMarkers(latLng, 100, i, data.events);
                     } else {
                         data.events[i].venue = data.city.city;
-                        console.log('도시없어서 '+ data.city.city +' 추가함', i);
-                        console.log(data);
                     }
                 }
             }
@@ -190,7 +175,7 @@ function showList(data) {
     blank.classList.add('blank', 'blank-full');
     info.appendChild(blank);
 
-    console.log('data', data);
+    // console.log('data', data);
 
     setTimeout(() => makeEventList(data), 0);
     // makeEventList(data);
@@ -202,8 +187,6 @@ function makeEventList(data) {
 
     if (data) {
         if (data.events && data.events.length) {
-            // console.log('이벤트갯수', data.events.length);
-            // console.log('도착한 event data:', data.events);
             for (let i = 0; i < data.events.length; i++) {
                 const event = document.createElement('div');
                 event.classList.add('event');
@@ -239,11 +222,7 @@ function makeEventList(data) {
                 event.appendChild(eventInfo);
 
                 const additionalInfo = document.createElement('div');
-                const dDay = document.createElement('span');
-                const favorites = document.createElement('div');
                 const addEvent = document.createElement('img');
-                const link = document.createElement('div');
-                // dDay.textContent = 
                 addEvent.src = 'https://cdn0.iconfinder.com/data/icons/slim-square-icons-basics/100/basics-15-512.png';
                 if (localStorage.getItem(data.events[i].id)) {
                     addEvent.classList.add('add-event');
@@ -252,16 +231,8 @@ function makeEventList(data) {
                     addOrRemoveFromList(e, i, data.events);
                     countFavorites();
                 });
-                favorites.appendChild(addEvent);
-                link.textContent = 'JOIN';
-                // const eventLink = document.createElement('a');
-                // eventlink.setAttribute('class', 'signature');
-                // eventLink.setAttribute('href', events[i].link);
-                // link.appendChild(eventLink);
 
-                additionalInfo.appendChild(dDay);
-                additionalInfo.appendChild(favorites);
-                additionalInfo.appendChild(link);
+                additionalInfo.appendChild(addEvent);
                 event.appendChild(additionalInfo);
 
                 info.appendChild(event);
@@ -292,12 +263,10 @@ function showFavorites() {
     while (info.childElementCount > 1) { 
         info.removeChild(info.lastElementChild); 
     } 
-    // console.log(localStorage);
     localStorage.removeItem('loglevel:webpack-dev-server');
     if (localStorage.length) {
         for (let i = 0; i < localStorage.length; i++) {
             let favData = JSON.parse(Object.values(localStorage)[i]);
-            // console.log(JSON.parse(Object.values(localStorage)[i]));
             const favWrapper = document.createElement('div');
             favWrapper.classList.add('fav-wrapper');
             const fav = document.createElement('div');
@@ -305,13 +274,10 @@ function showFavorites() {
             const favMainInfo = document.createElement('div');
             const favEventImg = document.createElement('img');
             if (favData.featured_photo) {
-                console.log('사진', favData.featured_photo.photo_link);
-
                 favEventImg.src = favData.featured_photo.photo_link;
             } else {
                 console.log('사진없음', Object.keys(localStorage)[i]);
             }
-            // favEventImg.src = 'https://images.unsplash.com/photo-1469488865564-c2de10f69f96?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80';
 
             const favTitleWrapper = document.createElement('div');
             const favEventTitle = document.createElement('span');
@@ -399,21 +365,15 @@ function decreaseFavCount() {
 
 
 function addOrRemoveFromList(e, i, events) {
-    // console.log(events[i].id);
-    // console.log(events[i]);
-    // console.log('storage', localStorage);
-
     if (!e.target.classList.length || e.target.classList.contains('remove-event')) {
         e.target.classList.remove('remove-event');
         e.target.classList.add('add-event');
         localStorage.setItem(events[i].id, JSON.stringify(events[i]));
-        // console.log('넣은후storage', localStorage);
 
     } else if (e.target.classList.contains('add-event')) {
         e.target.classList.remove('add-event');
         e.target.classList.add('remove-event');
         localStorage.removeItem(events[i].id);
-        // console.log('삭제후storage', localStorage);
     }
 }
 
@@ -429,6 +389,9 @@ var icon = {
 }
 
 function dropMarkers(position, time, index, events) {
+    infowindowContent.children['place-name'].textContent = `${events.length} meetups are around here!`;
+    infowindow.open(map, marker);
+
     setTimeout(function() {
         let venueMarker = new google.maps.Marker({
             position: position,
@@ -441,14 +404,17 @@ function dropMarkers(position, time, index, events) {
             infowindow.open(map, venueMarker);
         });
         markers.push(venueMarker);
+
+        var bounds = new google.maps.LatLngBounds();
+        for (var i = 0; i < markers.length; i++) {
+            bounds.extend(markers[i].getPosition());
+        }
+        bounds.extend(pointer[0].getPosition());
+    
+        map.fitBounds(bounds);
+    
     }, time);
 
-    // var LatLngbounds = new google.maps.LatLngBounds();
-    // for (var i = 0; i < markers.length; i++) {
-    //     bounds.extend(markers[i].getPosition());
-    // }
-
-    // map.fitBounds(LatLngbounds);
 }
 
 function deleteMarkers() {
