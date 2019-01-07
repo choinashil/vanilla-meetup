@@ -25,7 +25,7 @@ initMap();
 
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
-        center: {lat: 51.46, lng: -2.6},
+        center: {lat: 38.74849747886509 , lng: -9.16276837795408},
         zoom: 14,
         mapTypeControl: false,
         streetViewControl: false
@@ -134,6 +134,10 @@ function requestData(lat, lng, page = 10) {
                     if (data.events[i].venue) {
                         let latLng = {lat: data.events[i].venue.lat, lng: data.events[i].venue.lon}
                         dropMarkers(latLng, i * 150, i, data.events);
+                    } else {
+                        data.events[i].venue = data.city.city;
+                        console.log('도시없어서 '+ data.city.city +' 추가함', i);
+                        console.log(data);
                     }
                 }
             }
@@ -145,7 +149,7 @@ function requestData(lat, lng, page = 10) {
 };
 
 setting.children[0].addEventListener('click', () => showList(recentData));
-setting.children[1].addEventListener('click', () => showFavorites());
+setting.children[1].addEventListener('click', showFavorites);
 
 
 function showFavorites() {
@@ -158,34 +162,65 @@ function showFavorites() {
         info.removeChild(info.lastElementChild); 
     } 
     // console.log(localStorage);
+    localStorage.removeItem('loglevel:webpack-dev-server');
+    if (localStorage.length) {
+        for (let i = 0; i < localStorage.length; i++) {
+            let favData = JSON.parse(Object.values(localStorage)[i]);
+            console.log(JSON.parse(Object.values(localStorage)[i]));
+            const favWrapper = document.createElement('div');
+            favWrapper.classList.add('fav-wrapper');
+            const fav = document.createElement('div');
+            fav.classList.add('fav');
+            const favMainInfo = document.createElement('div');
+            const favEventImg = document.createElement('img');
+            if (favData.featured_photo) {
+                // console.log('사진', favData.featured_photo.photo_link);
 
-    for (let i = 0; i < localStorage.length - 1; i++) {
-        // console.log(JSON.parse(Object.values(localStorage)[i]));
-        let favData = JSON.parse(Object.values(localStorage)[i]);
-        console.log(i);
-        if (!favData.featured_photo) {
-            console.log('없어');
-            favData.featured_photo = 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80';
+            //     favEventImg.src = favData.featured_photo.photo_link;
+            } else {
+                console.log('사진없음', Object.keys(localStorage)[i]);
+            }
+            favEventImg.src = 'https://images.unsplash.com/photo-1469488865564-c2de10f69f96?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80';
+
+            const favTitleWrapper = document.createElement('div');
+            const favEventTitle = document.createElement('span');
+            favEventTitle.textContent = favData.name;
+            favTitleWrapper.appendChild(favEventTitle);
+            const favDeleteBt = document.createElement('img');
+            favDeleteBt.src = 'https://postfiles.pstatic.net/MjAxOTAxMDdfMTIy/MDAxNTQ2ODA3NTI1NzY2.RskCx8ubPA4maS8GQ5rynPb2_q2xSTlDj9mjadqc2lgg.9pKiY1GLgdO3zYj4TNRtxwSvedqpigHgNWZSBHp2dDcg.PNG.choinashil/basics-15-512.png?type=w773';
+            favDeleteBt.addEventListener('click', (e) => removeFromFavorites(e, favData));
+            favMainInfo.appendChild(favEventImg);
+            favMainInfo.appendChild(favTitleWrapper);
+            favMainInfo.appendChild(favDeleteBt);
+            const favDetails = document.createElement('div');
+            const favGroupNameWrapper = document.createElement('div');
+            const prepBy = document.createElement('span');
+            const favGroupName = document.createElement('span');
+            const favDateWrapper = document.createElement('div');
+            const favDate = document.createElement('span');
+            const prepIn = document.createElement('span');
+            const favCity = document.createElement('span');
+            prepBy.textContent = 'by'
+            favGroupName.textContent = favData.group.name;
+            favDate.textContent = favData.local_date + ' ' + favData.local_time;
+            prepIn.textContent = 'in';
+            favCity.textContent = favData.venue.city ? favData.venue.city : favData.venue;
+            favGroupNameWrapper.appendChild(prepBy);
+            favGroupNameWrapper.appendChild(favGroupName);
+            favDateWrapper.appendChild(favDate);
+            favDateWrapper.appendChild(prepIn);
+            favDateWrapper.appendChild(favCity);
+            favDetails.appendChild(favGroupNameWrapper);
+            favDetails.appendChild(favDateWrapper);
+
+            fav.appendChild(favMainInfo);
+            fav.appendChild(favDetails);
+
+            favWrapper.appendChild(fav);
+            info.appendChild(favWrapper);
         }
-        const favMarkup = `
-        <div class="fav">
-            <div>
-                <img src="${favData.featured_photo.photo_link}">
-                <div>
-                    <span>${favData.name}</span>
-                </div>
-                <img src='https://postfiles.pstatic.net/MjAxOTAxMDdfMTIy/MDAxNTQ2ODA3NTI1NzY2.RskCx8ubPA4maS8GQ5rynPb2_q2xSTlDj9mjadqc2lgg.9pKiY1GLgdO3zYj4TNRtxwSvedqpigHgNWZSBHp2dDcg.PNG.choinashil/basics-15-512.png?type=w773' class="delete-fav">
-            </div>
-            <div>
-                <span>by</span>
-                <span>${favData.group.name}</span><br>
-                <span>${favData.local_date} ${favData.local_time}</span>
-                <span>in</span>
-                <span>${favData.venue.city}</span>
-            </div>
-        </div>`
-        info.insertAdjacentHTML('afterend', favMarkup);
     }
+
 
 };
 
@@ -203,6 +238,7 @@ function showList(data) {
     while (info.childElementCount > 1) { 
         info.removeChild(info.lastElementChild); 
     } 
+
     if (data.events && data.events.length) {
         // console.log('이벤트갯수', data.events.length);
         // console.log('도착한 event data:', data.events);
@@ -247,8 +283,11 @@ function showList(data) {
             const link = document.createElement('div');
             // dDay.textContent = 
             addEvent.src = 'https://cdn0.iconfinder.com/data/icons/slim-square-icons-basics/100/basics-15-512.png';
+            if (localStorage.getItem(data.events[i].id)) {
+                addEvent.classList.add('add-event');
+            }
             addEvent.addEventListener('click', function(e) {
-                addFavorites(e, i, data.events);
+                addOrRemoveFromList(e, i, data.events);
             });
             favorites.appendChild(addEvent);
             link.textContent = 'JOIN';
@@ -274,23 +313,28 @@ function showList(data) {
 }
 
 
-function addFavorites(e, i, events) {
-    console.log(events[i].id);
-    console.log(events[i]);
-    console.log('storage', localStorage);
+function addOrRemoveFromList(e, i, events) {
+    // console.log(events[i].id);
+    // console.log(events[i]);
+    // console.log('storage', localStorage);
 
     if (!e.target.classList.length || e.target.classList.contains('remove-event')) {
         e.target.classList.remove('remove-event');
         e.target.classList.add('add-event');
-        window.localStorage.setItem(events[i].id, JSON.stringify(events[i]));
-        console.log('넣은후storage', localStorage);
+        localStorage.setItem(events[i].id, JSON.stringify(events[i]));
+        // console.log('넣은후storage', localStorage);
 
     } else if (e.target.classList.contains('add-event')) {
         e.target.classList.remove('add-event');
         e.target.classList.add('remove-event');
-        window.localStorage.removeItem(events[i].id);
-        console.log('삭제후storage', localStorage);
+        localStorage.removeItem(events[i].id);
+        // console.log('삭제후storage', localStorage);
     }
+}
+
+function removeFromFavorites(e, favData) {
+    localStorage.removeItem(favData.id);
+    e.target.parentElement.parentElement.parentElement.remove();
 }
 
 var icon = {
