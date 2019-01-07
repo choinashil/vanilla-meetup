@@ -1,5 +1,8 @@
 // Load application styles
 import 'styles/index.scss';
+import 'styles/_utils.scss';
+import 'styles/_events.scss';
+import 'styles/_favorites.scss';
 
 // ================================
 // START YOUR APP HERE
@@ -7,6 +10,9 @@ import 'styles/index.scss';
 
 // You can use jquery for ajax request purpose only.
 import $ from 'jquery';
+
+// import {showFavorites} from 'favorites.js';
+
 
 // f414b55d7015574938371e29587622 meetupkey
 
@@ -18,14 +24,18 @@ let isRequesting = false;
 var infowindow;
 var infowindowContent;
 let recentData;
+let blank;
+let init = true;
+const googleMap = document.querySelector('.googleMap');
 const info = document.querySelector('.info');
 const setting = document.querySelector('.setting');
 
 initMap();
+countFavorites();
 
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
-        center: {lat: 38.74849747886509 , lng: -9.16276837795408},
+        center: {lat: 38.76630114693474  , lng: -9.182209028894022},
         zoom: 14,
         mapTypeControl: false,
         streetViewControl: false
@@ -129,8 +139,10 @@ function requestData(lat, lng, page = 10) {
         }).then(rawData => {
             let data = rawData.data;
             recentData = data;
+            console.log('장소검색할',data);
             if (data.events.length) {
                 for (let i = 0; i < data.events.length; i++) {
+                    data.city.country = data.city.country.toUpperCase();
                     if (data.events[i].venue) {
                         let latLng = {lat: data.events[i].venue.lat, lng: data.events[i].venue.lon}
                         dropMarkers(latLng, i * 150, i, data.events);
@@ -141,6 +153,7 @@ function requestData(lat, lng, page = 10) {
                     }
                 }
             }
+            setting.children[0].children[1].textContent = `${data.city.city}, ${data.city.country}`;
             showList(data);
         }).catch(err => {
             // alert(err);
@@ -148,15 +161,133 @@ function requestData(lat, lng, page = 10) {
     }
 };
 
-setting.children[0].addEventListener('click', () => showList(recentData));
-setting.children[1].addEventListener('click', showFavorites);
+setting.children[0].children[0].addEventListener('click', () => showList(recentData));
+setting.children[1].children[1].addEventListener('click', showFavorites);
 
+
+
+function showList(data) {
+    isRequesting = false;
+
+    googleMap.classList.remove('w50');
+    googleMap.classList.add('w60');
+    info.classList.remove('w50');
+    info.classList.add('w40');
+
+    setting.classList.remove('show-favorites');
+    setting.classList.add('show-list');
+    info.classList.remove('info-favorites');
+    info.classList.add('info-list');
+
+    setting.children[0].children[1].classList.remove('invisible');
+
+
+    while (info.childElementCount > 1) { 
+        info.removeChild(info.lastElementChild); 
+    }
+
+    blank = document.createElement('div');
+    blank.classList.add('blank', 'blank-full');
+    info.appendChild(blank);
+
+    console.log('data', data);
+
+    setTimeout(() => makeEventList(data), 0);
+    // makeEventList(data);
+}
+
+function makeEventList(data) {
+    blank.classList.remove('blank-full');
+    blank.classList.add('h0');
+
+    if (data) {
+        if (data.events && data.events.length) {
+            // console.log('이벤트갯수', data.events.length);
+            // console.log('도착한 event data:', data.events);
+            for (let i = 0; i < data.events.length; i++) {
+                const event = document.createElement('div');
+                event.classList.add('event');
+                const hostInfo = document.createElement('div');
+                const imgWrapper = document.createElement('div');
+                const hostImg = document.createElement('img');
+                const hostName = document.createElement('span');
+                if (data.events[i].event_hosts && data.events[i].event_hosts[0].photo) {
+                    hostImg.src = data.events[i].event_hosts[0].photo.photo_link;
+                    hostName.textContent = data.events[i].event_hosts[0].name;
+                } else {
+                    hostImg.src = 'https://www.smallstreammedia.nl/workspace/assets/images/empty_profile.png';
+                }
+                imgWrapper.appendChild(hostImg);
+                hostInfo.appendChild(imgWrapper);
+                hostInfo.appendChild(hostName);
+                event.appendChild(hostInfo);
+
+                const eventInfo = document.createElement('div');
+                const eventTitle = document.createElement('span');
+                const eventGroup = document.createElement('span');
+                const eventDate = document.createElement('span');
+                const eventRsvp = document.createElement('span');
+                const dateAndTime = data.events[i].local_date + ' ' + data.events[i].local_time;
+                eventTitle.textContent = data.events[i].name;
+                eventGroup.textContent = data.events[i].group.name;
+                eventDate.textContent = dateAndTime;
+                eventRsvp.textContent = 'RSVP ' + data.events[i].yes_rsvp_count;
+                eventInfo.appendChild(eventTitle);
+                eventInfo.appendChild(eventGroup);
+                eventInfo.appendChild(eventDate);
+                eventInfo.appendChild(eventRsvp);
+                event.appendChild(eventInfo);
+
+                const additionalInfo = document.createElement('div');
+                const dDay = document.createElement('span');
+                const favorites = document.createElement('div');
+                const addEvent = document.createElement('img');
+                const link = document.createElement('div');
+                // dDay.textContent = 
+                addEvent.src = 'https://cdn0.iconfinder.com/data/icons/slim-square-icons-basics/100/basics-15-512.png';
+                if (localStorage.getItem(data.events[i].id)) {
+                    addEvent.classList.add('add-event');
+                }
+                addEvent.addEventListener('click', function(e) {
+                    addOrRemoveFromList(e, i, data.events);
+                    countFavorites();
+                });
+                favorites.appendChild(addEvent);
+                link.textContent = 'JOIN';
+                // const eventLink = document.createElement('a');
+                // eventlink.setAttribute('class', 'signature');
+                // eventLink.setAttribute('href', events[i].link);
+                // link.appendChild(eventLink);
+
+                additionalInfo.appendChild(dDay);
+                additionalInfo.appendChild(favorites);
+                additionalInfo.appendChild(link);
+                event.appendChild(additionalInfo);
+
+                info.appendChild(event);
+            }
+        } else {
+            const noResult = document.createElement('div');
+            noResult.classList.add('noResult');
+            noResult.textContent = `There is no meetup in ${data.city.city}!`;
+            info.appendChild(noResult);
+        }
+    }
+
+}
 
 function showFavorites() {
+    googleMap.classList.remove('w60');
+    googleMap.classList.add('w50');
+    info.classList.remove('w40');
+    info.classList.add('w50');
+
     setting.classList.remove('show-list');
     setting.classList.add('show-favorites');
     info.classList.remove('info-list');
     info.classList.add('info-favorites');
+
+    setting.children[0].children[1].classList.add('invisible');
 
     while (info.childElementCount > 1) { 
         info.removeChild(info.lastElementChild); 
@@ -166,7 +297,7 @@ function showFavorites() {
     if (localStorage.length) {
         for (let i = 0; i < localStorage.length; i++) {
             let favData = JSON.parse(Object.values(localStorage)[i]);
-            console.log(JSON.parse(Object.values(localStorage)[i]));
+            // console.log(JSON.parse(Object.values(localStorage)[i]));
             const favWrapper = document.createElement('div');
             favWrapper.classList.add('fav-wrapper');
             const fav = document.createElement('div');
@@ -174,13 +305,13 @@ function showFavorites() {
             const favMainInfo = document.createElement('div');
             const favEventImg = document.createElement('img');
             if (favData.featured_photo) {
-                // console.log('사진', favData.featured_photo.photo_link);
+                console.log('사진', favData.featured_photo.photo_link);
 
-            //     favEventImg.src = favData.featured_photo.photo_link;
+                favEventImg.src = favData.featured_photo.photo_link;
             } else {
                 console.log('사진없음', Object.keys(localStorage)[i]);
             }
-            favEventImg.src = 'https://images.unsplash.com/photo-1469488865564-c2de10f69f96?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80';
+            // favEventImg.src = 'https://images.unsplash.com/photo-1469488865564-c2de10f69f96?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80';
 
             const favTitleWrapper = document.createElement('div');
             const favEventTitle = document.createElement('span');
@@ -188,7 +319,13 @@ function showFavorites() {
             favTitleWrapper.appendChild(favEventTitle);
             const favDeleteBt = document.createElement('img');
             favDeleteBt.src = 'https://postfiles.pstatic.net/MjAxOTAxMDdfMTIy/MDAxNTQ2ODA3NTI1NzY2.RskCx8ubPA4maS8GQ5rynPb2_q2xSTlDj9mjadqc2lgg.9pKiY1GLgdO3zYj4TNRtxwSvedqpigHgNWZSBHp2dDcg.PNG.choinashil/basics-15-512.png?type=w773';
-            favDeleteBt.addEventListener('click', (e) => removeFromFavorites(e, favData));
+
+            favDeleteBt.addEventListener('click', (e) => {
+                removeFromFavorites(e, favData);
+                countFavorites();
+                // decreaseFavCount();
+            });
+
             favMainInfo.appendChild(favEventImg);
             favMainInfo.appendChild(favTitleWrapper);
             favMainInfo.appendChild(favDeleteBt);
@@ -224,93 +361,41 @@ function showFavorites() {
 
 };
 
-function showList(data) {
-    isRequesting = false;
-
-    setting.classList.remove('show-favorites');
-    setting.classList.add('show-list');
-    info.classList.remove('info-favorites');
-    info.classList.add('info-list');
-    
-
-    console.log('data', data);
-
-    while (info.childElementCount > 1) { 
-        info.removeChild(info.lastElementChild); 
+function countFavorites() {
+    localStorage.removeItem('loglevel:webpack-dev-server');
+    if (!init) {
+        setting.children[1].children[1].classList.add('bounce-effect');
     } 
+    init = false;
+    setting.children[1].children[0].children[0].textContent = localStorage.length;
 
-    if (data.events && data.events.length) {
-        // console.log('이벤트갯수', data.events.length);
-        // console.log('도착한 event data:', data.events);
-        for (let i = 0; i < data.events.length; i++) {
-            const event = document.createElement('div');
-            event.classList.add('event');
-            const hostInfo = document.createElement('div');
-            const imgWrapper = document.createElement('div');
-            const hostImg = document.createElement('img');
-            const hostName = document.createElement('span');
-            if (data.events[i].event_hosts && data.events[i].event_hosts[0].photo) {
-                hostImg.src = data.events[i].event_hosts[0].photo.photo_link;
-                hostName.textContent = data.events[i].event_hosts[0].name;
-            } else {
-                hostImg.src = 'https://www.smallstreammedia.nl/workspace/assets/images/empty_profile.png';
-            }
-            imgWrapper.appendChild(hostImg);
-            hostInfo.appendChild(imgWrapper);
-            hostInfo.appendChild(hostName);
-            event.appendChild(hostInfo);
+    // setTimeout(deleteBounceEffect, 10);
+    
+    // deleteBounceEffect();
 
-            const eventInfo = document.createElement('div');
-            const eventTitle = document.createElement('span');
-            const eventGroup = document.createElement('span');
-            const eventDate = document.createElement('span');
-            const eventRsvp = document.createElement('span');
-            const dateAndTime = data.events[i].local_date + ' ' + data.events[i].local_time;
-            eventTitle.textContent = data.events[i].name;
-            eventGroup.textContent = data.events[i].group.name;
-            eventDate.textContent = dateAndTime;
-            eventRsvp.textContent = 'RSVP ' + data.events[i].yes_rsvp_count;
-            eventInfo.appendChild(eventTitle);
-            eventInfo.appendChild(eventGroup);
-            eventInfo.appendChild(eventDate);
-            eventInfo.appendChild(eventRsvp);
-            event.appendChild(eventInfo);
+    // var plus = localStorage.length + 1;
+    // var minus = localStorage.length - 1;
+    // setting.children[1].children[0].children[0].innerHTML = `${plus}<br>${localStorage.length}<br>${minus}`;
+}
 
-            const additionalInfo = document.createElement('div');
-            const dDay = document.createElement('span');
-            const favorites = document.createElement('div');
-            const addEvent = document.createElement('img');
-            const link = document.createElement('div');
-            // dDay.textContent = 
-            addEvent.src = 'https://cdn0.iconfinder.com/data/icons/slim-square-icons-basics/100/basics-15-512.png';
-            if (localStorage.getItem(data.events[i].id)) {
-                addEvent.classList.add('add-event');
-            }
-            addEvent.addEventListener('click', function(e) {
-                addOrRemoveFromList(e, i, data.events);
-            });
-            favorites.appendChild(addEvent);
-            link.textContent = 'JOIN';
-            // const eventLink = document.createElement('a');
-            // eventlink.setAttribute('class', 'signature');
-            // eventLink.setAttribute('href', events[i].link);
-            // link.appendChild(eventLink);
+function deleteBounceEffect() {
+    setting.children[1].children[1].classList.remove('bounce-effect');
+}
 
-            additionalInfo.appendChild(dDay);
-            additionalInfo.appendChild(favorites);
-            additionalInfo.appendChild(link);
-            event.appendChild(additionalInfo);
-
-            info.appendChild(event);
-        }
-    } else {
-        const noResult = document.createElement('div');
-        noResult.classList.add('noResult');
-        noResult.textContent = `There is no meetup in ${data.city.city}!`;
-        info.appendChild(noResult);
-    }
+function increaseFavCount() {
+    localStorage.removeItem('loglevel:webpack-dev-server');
 
 }
+
+function decreaseFavCount() {
+    localStorage.removeItem('loglevel:webpack-dev-server');
+    setting.children[1].children[0].children[0].classList.add();
+
+    var plus = localStorage.length + 1;
+    var minus = localStorage.length - 1;
+    setting.children[1].children[0].children[0].innerHTML = `${plus}<br>${localStorage.length}<br>${minus}`;
+}
+
 
 
 function addOrRemoveFromList(e, i, events) {
@@ -335,6 +420,7 @@ function addOrRemoveFromList(e, i, events) {
 function removeFromFavorites(e, favData) {
     localStorage.removeItem(favData.id);
     e.target.parentElement.parentElement.parentElement.remove();
+
 }
 
 var icon = {
@@ -356,6 +442,13 @@ function dropMarkers(position, time, index, events) {
         });
         markers.push(venueMarker);
     }, time);
+
+    // var LatLngbounds = new google.maps.LatLngBounds();
+    // for (var i = 0; i < markers.length; i++) {
+    //     bounds.extend(markers[i].getPosition());
+    // }
+
+    // map.fitBounds(LatLngbounds);
 }
 
 function deleteMarkers() {

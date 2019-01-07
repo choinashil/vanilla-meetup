@@ -1,38 +1,46 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width">
-    <!-- <meta name="viewport" content="initial-scale=1.0, user-scalable=no"> -->
-    <link href="https://fonts.googleapis.com/css?family=Kaushan+Script|Sarabun|Yeon+Sung" rel="stylesheet">    
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
-    <title><%= htmlWebpackPlugin.options.title %></title>
-</head>
-<body>
-    <div class="header">
-        <div class="title">Vanilla<br>Meetup</div>
-    </div>
-
-    <div class="intro">
-        <!-- <input id="input-in-intro" class="controls" type="text" placeholder="Enter a location"> -->
-    </div>
-
-    <div class="content"> 
-        <div class="googleMap w60">
-            <input id="input-in-the-map" class="controls" type="text" placeholder="Enter a location">
-            <div id="map"></div>
-            <div id="infowindow-content">
-                <span id="place-name" class="title"></span>
-            </div>    
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <!-- <meta name="viewport" content="initial-scale=1.0, user-scalable=no"> -->
+        <link href="https://fonts.googleapis.com/css?family=Kaushan+Script|Sarabun|Yeon+Sung" rel="stylesheet">    
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+        <title><%= htmlWebpackPlugin.options.title %></title>
+    </head>
+    <body>
+        <div class="header">
+            <div class="title">Vanilla<br>Meetup</div>
         </div>
-        <div class="info info-list w40">
-            <div class="setting show-list">
-                <i class="fas fa-map-marker-alt listButton"></i>
-                <i class="fas fa-heart favoriteButton"></i>
+
+        <div class="intro">
+            <!-- <input id="input-in-intro" class="controls" type="text" placeholder="Enter a location"> -->
+        </div>
+
+        <div class="content"> 
+            <div class="googleMap w60">
+                <input id="input-in-the-map" class="controls" type="text" placeholder="Enter a location">
+                <div id="map"></div>
+                <div id="infowindow-content">
+                    <span id="place-name" class="title"></span>
+                </div>    
+            </div>
+            <div class="info info-list w40">
+                <div class="setting show-list">
+                    <div>
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span></span>
+                    </div>
+                    <div>
+                        <div>
+                            <div></div>
+                        </div>
+                        <i class="fas fa-heart"></i>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB-AnmcygmTHbh-T82HgX2pTEXkhkWaM00&libraries=places"></script>
-</body>
+        
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB-AnmcygmTHbh-T82HgX2pTEXkhkWaM00&libraries=places"></script>
+    </body>
 </html>

@@ -9,7 +9,7 @@ const dirNode = 'node_modules';
 const dirApp = path.join(__dirname, 'app');
 const dirAssets = path.join(__dirname, 'assets');
 
-const appHtmlTitle = 'Good Luck..';
+const appHtmlTitle = 'Vanilla Meetup';
 
 /**
  * Webpack Configuration

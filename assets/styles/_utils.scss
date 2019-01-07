@@ -1,0 +1,58 @@
+/* fonts */
+@font-face { font-family: 'SeoulHangangM'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/SeoulHangangM.woff') format('woff'); font-weight: normal; font-style: normal; }
+
+
+
+/* variables */
+$point: #da5252;
+
+$bk1: rgba(0, 0, 0, .1);
+$bk2: rgba(0, 0, 0, .2);
+$bk3: rgba(0, 0, 0, .3);
+$bk4: rgba(0, 0, 0, .4);
+$bk5: rgba(0, 0, 0, .5);
+$bk6: rgba(0, 0, 0, .6);
+$bk7: rgba(0, 0, 0, .7);
+$bk8: rgba(0, 0, 0, .8);
+$bk9: rgba(0, 0, 0, .9);
+
+
+
+/* utils */
+.selected {color: $point;}
+
+.grey {color: #777;}
+
+.invisible {
+    display: none;
+}
+
+.w0 {width: 0;}
+.w10 {width: 10%;}
+.w20 {width: 20%;}
+.w30 {width: 30%;}
+.w40 {width: 40%;}
+.w50 {width: 50%;}
+.w60 {width: 60%;}
+.w70 {width: 70%;}
+.w80 {width: 80%;}
+.w90 {width: 90%;}
+.w100 {width: 100%;}
+
+// .h0 {height: 0;}
+
+
+
+// .increase {top: }
+// .decrease {top: 21px;}
+
+.bounce-effect {
+    animation: bounce .3s;
+}
+
+@keyframes bounce {
+    0% {transform: scale(1);}
+    50% {transform: scale(1.1);}
+    100% {transform: scale(1);}
+}
+
