@@ -1,52 +1,42 @@
 @import '_utils.scss';
 
 .fav-wrapper {
-    width: 50%;
     display: flex;
     justify-content: center;
+    width: 50%;
     padding: 20px 0;
-    // border: 1px solid green;
 }
+
 .fav {
-    // width: 42%;
-    width: 80%;
-    // height: 50px;
-    border: 1px solid rgba(0, 0, 0, .2);
-    box-shadow: 2px 3px 5px rgba(0, 0, 0, .2);
     display: flex;
     flex-direction: column;
-    flex-shrink: 0;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 80%;
+    border: $border;
+    box-shadow: 2px 3px 5px $bk2;
     padding: 10px 0;
-    // margin-bottom: 25px;
-    // margin: 12px 20px;
     > div:nth-child(1) {
-        width: 90%;
-        // border: 1px solid blue;
-        border-bottom: 1px solid $bk2;
         position: relative;
-        
-        // padding-bottom: 10px;
+        width: 90%;
+        border-bottom: 1px solid $bk2;
         img:nth-child(1) {
             width: 100%;
             display: block;
             margin-bottom: 10px;
         }
         > div {
-            position: absolute;
-            // border: 1px solid blue;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: calc(100% - 10px);
-            padding: 10px;
             display: flex;
             align-items: flex-end;
+            width: 100%;
+            height: calc(100% - 10px);
+            position: absolute;
+            left: 0;
+            top: 0;
+            padding: 10px;
             background: linear-gradient(to top, $bk8, $bk1);
             span {
-                // position: absolute;
-                // border: 1px solid yellow;
                 bottom: 0;
                 color: rgba(255, 255, 255, 0.95);
                 font-size: 20px;
@@ -56,31 +46,29 @@
         img:nth-child(3) {
             position: absolute;
             width: 30px;
-            right: 0;
             top: 0;
+            right: 0;
             transform: rotate(45deg);
-            cursor: pointer;
             display: none;
+            cursor: pointer;
         }
         &:hover img:nth-child(3) {
             display: block;
         }
     }
     > div:nth-child(2) {
-        margin: 10px 0 8px 0;
-        color: $bk8;
-        // border: 1px solid green;
-        width: 90%;
-        padding: 0 2px;
         display: flex;
-        // flex-direction: column;
         flex-wrap: wrap;
+        width: 90%;
+        margin: 10px 0 8px 0;
+        padding: 0 2px;
+        color: $bk8;
         div:nth-child(1) {
             margin-bottom: 15px;
             span:nth-child(1) {
+                margin-right: 5px;
                 color: $bk4;
                 font-size: 12px;
-                margin-right: 5px;
                 font-style: italic;
             }
             span:nth-child(2) {
@@ -89,16 +77,14 @@
             }
         }
         div:nth-child(2) {
-            // border: 1px solid orange;
             width: 100%;
-            text-align: right;
-            font-size: 15px;
             color: $bk6;
+            font-size: 15px;
+            text-align: right;
             span:nth-child(2) {
                 color: $bk4;
                 font-size: 12px;
-                margin-left: 5px;
-                margin-right: 5px;
+                margin: 0 5px;
                 font-style: italic;
             }
         }

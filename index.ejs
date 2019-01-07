@@ -3,8 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-        <!-- <meta name="viewport" content="initial-scale=1.0, user-scalable=no"> -->
-        <link href="https://fonts.googleapis.com/css?family=Kaushan+Script|Sarabun|Yeon+Sung" rel="stylesheet">    
+        <link href="https://fonts.googleapis.com/css?family=Kaushan+Script|Sarabun|Yeon+Sung" rel="stylesheet">
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
         <title><%= htmlWebpackPlugin.options.title %></title>
     </head>
@@ -15,14 +14,16 @@
                 <input id="input" type="text" placeholder="Enter a location">
             </div>
         </div>
-        <!-- <div class="intro"></div> -->
-
-        <div class="content"> 
+        <div class="content">
             <div class="googleMap w60">
                 <div id="map"></div>
-                <div id="infowindow-content">
-                    <span id="place-name" class="infowindow-title"></span>
-                </div>    
+                <div class="infowindow-content">
+                    <div></div>
+                    <div>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
             </div>
             <div class="info info-list w40">
                 <div class="setting show-list">
@@ -39,7 +40,6 @@
                 </div>
             </div>
         </div>
-        
         <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB-AnmcygmTHbh-T82HgX2pTEXkhkWaM00&libraries=places"></script>
     </body>
 </html>

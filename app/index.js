@@ -1,7 +1,7 @@
 // Load application styles
 import 'styles/index.scss';
 import 'styles/_utils.scss';
-import 'styles/_events.scss';
+import 'styles/_eventlist.scss';
 import 'styles/_favorites.scss';
 
 // ================================
@@ -12,7 +12,6 @@ import 'styles/_favorites.scss';
 import $ from 'jquery';
 
 // import {showFavorites} from 'favorites.js';
-
 
 // f414b55d7015574938371e29587622 meetupkey
 
@@ -27,7 +26,6 @@ let infowindow;
 let infowindowContent;
 let recentData;
 let blank;
-let init = true;
 const googleMap = document.querySelector('.googleMap');
 const info = document.querySelector('.info');
 const setting = document.querySelector('.setting');
@@ -47,9 +45,12 @@ function initMap() {
     autocomplete = new google.maps.places.Autocomplete(input, {placeIdOnly: true});
     autocomplete.bindTo('bounds', map);
 
-    infowindow = new google.maps.InfoWindow();
-    infowindowContent = document.getElementById('infowindow-content');
-    infowindow.setContent(infowindowContent);
+    infowindowContent = document.querySelector('.infowindow-content');
+    infowindow = new google.maps.InfoWindow({
+        content: infowindowContent,
+        maxWidth: 250
+    });
+    
     geocoder = new google.maps.Geocoder;
 
     map.addListener('click', function (e) {
@@ -79,8 +80,6 @@ function initMap() {
         addPointer(results[0].geometry.location, map);
 
         console.log(place.name);
-        // infowindowContent.children['place-name'].textContent = `${place.name} 주변의 검색결과입니다`;
-        // infowindow.open(map, marker);
         requestData(results[0].geometry.location.lat(), results[0].geometry.location.lng());
         });
     });
@@ -89,10 +88,6 @@ function initMap() {
 function addPointer(location, map) {
     deletePointer();
     deleteMarkers();
-    // marker = new google.maps.Marker({
-    //     position: location,
-    //     map: map
-    // });
     console.log('클릭한 위치', location);
 
     geocoder.geocode({'location': location}, function(results, status) {
@@ -148,7 +143,6 @@ function requestData(lat, lng, page = 10) {
 
 setting.children[0].children[0].addEventListener('click', () => showList(recentData));
 setting.children[1].children[1].addEventListener('click', showFavorites);
-
 
 
 function showList(data) {
@@ -289,7 +283,6 @@ function showFavorites() {
             favDeleteBt.addEventListener('click', (e) => {
                 removeFromFavorites(e, favData);
                 countFavorites();
-                // decreaseFavCount();
             });
 
             favMainInfo.appendChild(favEventImg);
@@ -329,40 +322,8 @@ function showFavorites() {
 
 function countFavorites() {
     localStorage.removeItem('loglevel:webpack-dev-server');
-    if (!init) {
-        setting.children[1].children[1].classList.add('bounce-effect');
-    } 
-    init = false;
     setting.children[1].children[0].children[0].textContent = localStorage.length;
-
-    // setTimeout(deleteBounceEffect, 10);
-    
-    // deleteBounceEffect();
-
-    // var plus = localStorage.length + 1;
-    // var minus = localStorage.length - 1;
-    // setting.children[1].children[0].children[0].innerHTML = `${plus}<br>${localStorage.length}<br>${minus}`;
 }
-
-function deleteBounceEffect() {
-    setting.children[1].children[1].classList.remove('bounce-effect');
-}
-
-function increaseFavCount() {
-    localStorage.removeItem('loglevel:webpack-dev-server');
-
-}
-
-function decreaseFavCount() {
-    localStorage.removeItem('loglevel:webpack-dev-server');
-    setting.children[1].children[0].children[0].classList.add();
-
-    var plus = localStorage.length + 1;
-    var minus = localStorage.length - 1;
-    setting.children[1].children[0].children[0].innerHTML = `${plus}<br>${localStorage.length}<br>${minus}`;
-}
-
-
 
 function addOrRemoveFromList(e, i, events) {
     if (!e.target.classList.length || e.target.classList.contains('remove-event')) {
@@ -389,7 +350,17 @@ var icon = {
 }
 
 function dropMarkers(position, time, index, events) {
-    infowindowContent.children['place-name'].textContent = `${events.length} meetups are around here!`;
+    const infowindowImg = infowindowContent.children[0];
+    const infowindowTitle = infowindowContent.children[1];
+
+    if (infowindowImg.childElementCount) { 
+        infowindowImg.removeChild(infowindowImg.firstElementChild); 
+    } 
+    if (infowindowTitle.children[0].textContent) { 
+        infowindowTitle.children[0].textContent = '';
+    } 
+
+    infowindowTitle.children[1].textContent = `${events.length} meetups are around here!`;
     infowindow.open(map, marker);
 
     setTimeout(function() {
@@ -399,8 +370,26 @@ function dropMarkers(position, time, index, events) {
             // icon: icon,
             animation: google.maps.Animation.DROP
         });
+
         venueMarker.addListener('click', function() {
-            infowindowContent.children['place-name'].textContent = events[index].name;
+
+            if (infowindowImg.childElementCount) { 
+                infowindowImg.removeChild(infowindowImg.firstElementChild); 
+            }         
+
+            const venueImg = document.createElement('img');
+            if (events[index].featured_photo) {
+                venueImg.src = events[index].featured_photo.thumb_link;
+            } else {
+                venueImg.src = 'https://cdn.shopify.com/s/files/1/1061/1924/files/Kiss_Emoji_with_Closed_Eyes.png?8026536574188759287';
+            }
+            infowindowImg.appendChild(venueImg);
+
+            let dDay = calculateDday(events, index);
+
+            infowindowTitle.children[0].textContent = dDay ? `D-${dDay}` : 'Today!';
+            
+            infowindowTitle.children[1].textContent = events[index].name;
             infowindow.open(map, venueMarker);
         });
         markers.push(venueMarker);
@@ -410,11 +399,25 @@ function dropMarkers(position, time, index, events) {
             bounds.extend(markers[i].getPosition());
         }
         bounds.extend(pointer[0].getPosition());
-    
         map.fitBounds(bounds);
-    
-    }, time);
 
+    }, time);
+}
+
+function calculateDday(events, index) {
+    const d = new Date();
+    const year = String(d.getFullYear()); 
+    const month = (d.getMonth() + 1) < 10 ? '0' + String(d.getMonth() + 1) : String(d.getMonth() + 1);
+    const date = (d.getDate()) < 10 ? '0' + String(d.getDate()) : String(d.getDate());
+    const today = year + month + date;
+
+    let eventDate = events[index].local_date;
+    eventDate = eventDate.replace(/-/g, '');
+    // console.log(today);
+    // console.log(eventDate);
+
+    // console.log(eventDate - today);
+    return eventDate - today;
 }
 
 function deleteMarkers() {
