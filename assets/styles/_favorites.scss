@@ -13,7 +13,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    width: 80%;
+    width: 78%;
     border: $border;
     box-shadow: 2px 3px 5px $bk2;
     padding: 10px 0;
@@ -27,7 +27,6 @@
             margin-bottom: 10px;
         }
         > div {
-            display: flex;
             align-items: flex-end;
             width: 100%;
             height: calc(100% - 10px);
@@ -36,6 +35,8 @@
             top: 0;
             padding: 10px;
             background: linear-gradient(to top, $bk8, $bk1);
+            cursor: pointer;
+            display: none;
             span {
                 bottom: 0;
                 color: rgba(255, 255, 255, 0.95);
@@ -49,11 +50,14 @@
             top: 0;
             right: 0;
             transform: rotate(45deg);
-            display: none;
             cursor: pointer;
+            display: none;
         }
         &:hover img:nth-child(3) {
             display: block;
+        }
+        &:hover > div {
+            display: flex;
         }
     }
     > div:nth-child(2) {
