@@ -29,9 +29,14 @@ const info = document.querySelector('.info');
 const setting = document.querySelector('.setting');
 const googleMap = document.querySelector('.googleMap');
 
-const greenMarker = {
-    url: 'https://www.pacificrimvisitor.ca/wp-content/uploads/2017/04/flag.png',
-    scaledSize: new google.maps.Size(50, 50)
+const BigMarker = {
+    url: 'https://postfiles.pstatic.net/MjAxOTAxMDhfMTk4/MDAxNTQ2OTE5MjkyNjky.TNacKrbzR2UkFPei4NjHYbKvc8G1m5GkHltcBAJczCMg.BQigOiRfIsAJIjMThInuiFUyHIGfWAFUu-NYHxnnmpsg.PNG.choinashil/bigMarker.png?type=w773',
+    scaledSize: new google.maps.Size(30, 45)
+}
+
+const smallMarker = {
+    url: 'https://postfiles.pstatic.net/MjAxOTAxMDhfMjIw/MDAxNTQ2OTE5NzkyMTg1.pS-e_UBx58xjd6EZx3NYwJzinS3fB-jFVFpcuUD5QNUg.HUknQPc0P5j6BSJ_4cCMMGS_AL2OjBTw-0NTawBHKXMg.PNG.choinashil/smallMarker.png?type=w773',
+    scaledSize: new google.maps.Size(25, 35)
 }
 
 initMap();
@@ -42,7 +47,29 @@ function initMap() {
         center: {lat: 59.91348795365442, lng: 10.751302987337112},
         zoom: 14,
         mapTypeControl: false,
-        streetViewControl: false
+        streetViewControl: false,
+        styles: [
+            {
+                "featureType": "all",
+                "stylers": [{"saturation": 0}, {"hue": "#e7ecf0"}]
+            },
+            {
+                "featureType": "road",
+                "stylers": [{"saturation": -70}]
+            },
+            {
+                "featureType": "transit",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "water",
+                "stylers": [{"visibility": "simplified"}, {"saturation": -60}]
+            }
+        ]
     });
 
     const input = document.getElementById('input');
@@ -54,7 +81,7 @@ function initMap() {
         content: infowindowContent,
         maxWidth: 250
     });
-    
+
     geocoder = new google.maps.Geocoder;
 
     addEventListenerToMap();
@@ -63,7 +90,7 @@ function initMap() {
 }
 
 function addEventListenerToMap() {
-    map.addListener('click', function (e) {
+    map.addListener('click', (e) => {
         input.value = '';
         addPointer(e.latLng, map);
         requestData(e.latLng.lat(), e.latLng.lng());
@@ -72,15 +99,16 @@ function addEventListenerToMap() {
 }
 
 function addEventListenerToAutocomplete() {
-    autocomplete.addListener('place_changed', function() {
+    autocomplete.addListener('place_changed', () => {
         infowindow.close();
         let place = autocomplete.getPlace();
         if (!place.place_id) {
             return;
         }
-        geocoder.geocode({'placeId': place.place_id}, function(results, status) {
+        geocoder.geocode({'placeId': place.place_id}, (results, status) => {
             if (status !== 'OK') {
-                window.alert('Geocoder failed due to: ' + status);
+                info.children[1].classList.remove('invisible');
+                info.children[1].textContent = `Geocoder failed due to: ${status}`;
                 return;
             }
             const location = results[0].geometry.location;
@@ -101,26 +129,39 @@ function addPointer(location, map) {
     deletePointer();
     deleteMarkers();
 
-    geocoder.geocode({'location': location}, function(results, status) {
+    geocoder.geocode({'location': location}, (results, status) => {
         if (status === 'OK') {
             if (results[0]) {
                 marker = new google.maps.Marker({
                     position: location,
-                    map: map
+                    map: map,
+                    icon: BigMarker
                 });
                 pointer.push(marker);
             } else {
-                window.alert('No results found');
+                info.children[1].classList.remove('invisible');
+                info.children[1].textContent = 'No results found';
             }
         } else {
-            window.alert('Geocoder failed due to: ' + status);
+            info.children[1].classList.remove('invisible');
+            info.children[1].textContent = `Geocoder failed due to: ${status}`;
         }
     });
 }
 
+function deletePointer() {
+    pointer.forEach(p => p.setMap(null));
+    pointer = [];
+}
+
+function deleteMarkers() {
+    markers.forEach(marker => marker.setMap(null));
+    markers = [];
+}
+
 function requestData(lat, lng, page = 10) {
     if (!isRequesting) {
-        new Promise((resolve, reject) => { 
+        new Promise((resolve, reject) => {
             isRequesting = true;
             $.ajax({
                 url: `https://api.meetup.com/find/upcoming_events?photo-host=public&page=${page}&sig_id=271259792&fields=event_hosts%2C+featured_photo&lon=${lng}&lat=${lat}&sig=0ed587ea0a9a01c606e5de12ae751fac915d9214`,
@@ -145,13 +186,12 @@ function requestData(lat, lng, page = 10) {
             setting.children[0].children[1].textContent = `${data.city.city}, ${data.city.country}`;
             showList(data);
         }).catch(err => {
-            while (info.childElementCount > 2) { 
-                info.removeChild(info.lastElementChild); 
+            while (info.childElementCount > 2) {
+                info.removeChild(info.lastElementChild);
             }
-            // noticeError
             info.children[1].classList.remove('invisible');
             info.children[1].innerHTML = 'Error occured! <p> Please reload the page and try again';
-        });    
+        });
     }
 }
 
@@ -161,8 +201,8 @@ function showList(data) {
 
     changeSettingsForList();
 
-    while (info.childElementCount > 2) { 
-        info.removeChild(info.lastElementChild); 
+    while (info.childElementCount > 2) {
+        info.removeChild(info.lastElementChild);
     }
 
     blank = document.createElement('div');
@@ -218,13 +258,13 @@ function makeEventList(data) {
                 eventTitle.textContent = data.events[i].name;
                 eventGroup.textContent = data.events[i].group.name;
                 eventDate.textContent = dateAndTime;
-                eventRsvp.textContent = `RSVP ${data.events[i].yes_rsvp_count}`;            
+                eventRsvp.textContent = `RSVP ${data.events[i].yes_rsvp_count}`;
                 addFavorites.src = 'https://cdn0.iconfinder.com/data/icons/slim-square-icons-basics/100/basics-15-512.png';
                 if (localStorage.getItem(data.events[i].id)) {
                     addFavorites.classList.add('add-event');
                 }
 
-                addFavorites.addEventListener('click', function(e) {
+                addFavorites.addEventListener('click', (e) => {
                     addOrRemoveFromList(e, i, data.events);
                     countFavorites();
                 });
@@ -249,6 +289,36 @@ function makeEventList(data) {
     }
 }
 
+function addOrRemoveFromList(e, i, events) {
+    if (!e.target.classList.length || e.target.classList.contains('remove-event')) {
+        e.target.classList.remove('remove-event');
+        e.target.classList.add('add-event');
+        localStorage.setItem(events[i].id, JSON.stringify(events[i]));
+    } else if (e.target.classList.contains('add-event')) {
+        e.target.classList.remove('add-event');
+        e.target.classList.add('remove-event');
+        localStorage.removeItem(events[i].id);
+    }
+}
+
+function countFavorites() {
+    localStorage.removeItem('loglevel:webpack-dev-server');
+    setting.children[1].children[0].children[0].textContent = localStorage.length;
+    if (!localStorage.length) {
+        alertEmptyStatus();
+    }
+}
+
+function showFavorites() {
+    displayType = 'favorites';
+    changeSettingsForFavorites();
+
+    while (info.childElementCount > 2) {
+        info.removeChild(info.lastElementChild);
+    }
+    makeFavorites();
+};
+
 function changeSettingsForFavorites() {
     googleMap.classList.remove('w60');
     googleMap.classList.add('w50');
@@ -263,16 +333,6 @@ function changeSettingsForFavorites() {
     setting.children[0].children[1].classList.add('invisible');
     info.children[1].classList.add('invisible');
 }
-
-function showFavorites() {
-    displayType = 'favorites';
-    changeSettingsForFavorites();
-
-    while (info.childElementCount > 2) { 
-        info.removeChild(info.lastElementChild); 
-    }
-    makeFavorites();
-};
 
 function makeFavorites() {
     localStorage.removeItem('loglevel:webpack-dev-server');
@@ -335,35 +395,14 @@ function makeFavorites() {
             info.appendChild(favWrapper);
         }
     } else {
-        alertEmptyFavorites();
+        alertEmptyStatus();
     }
 }
 
-function alertEmptyFavorites() {
-    if (displayType === 'favorites') {
-        info.children[1].classList.remove('invisible');
-        info.children[1].textContent = 'Why don\'t you add your favorite?';    
-    }
-}
+function pickRandomImg() {
+    const imgStorage = ['https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80', 'https://images.unsplash.com/photo-1511988617509-a57c8a288659?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1351&q=80', 'https://images.unsplash.com/photo-1520881363902-a0ff4e722963?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1650&q=80', 'https://i.pinimg.com/564x/ff/97/7a/ff977a8ec331fb14fde7a36fa7f2f45d.jpg', 'https://i.pinimg.com/564x/11/95/6e/11956eef61d061e36c2bf1361b2f79c8.jpg'];
 
-function countFavorites() {
-    localStorage.removeItem('loglevel:webpack-dev-server');
-    setting.children[1].children[0].children[0].textContent = localStorage.length;
-    if (!localStorage.length) {
-        alertEmptyFavorites();
-    }
-}
-
-function addOrRemoveFromList(e, i, events) {
-    if (!e.target.classList.length || e.target.classList.contains('remove-event')) {
-        e.target.classList.remove('remove-event');
-        e.target.classList.add('add-event');
-        localStorage.setItem(events[i].id, JSON.stringify(events[i]));
-    } else if (e.target.classList.contains('add-event')) {
-        e.target.classList.remove('add-event');
-        e.target.classList.add('remove-event');
-        localStorage.removeItem(events[i].id);
-    }
+    return imgStorage[Math.floor(Math.random() * imgStorage.length)];
 }
 
 function removeFromFavorites(e, favData) {
@@ -371,20 +410,27 @@ function removeFromFavorites(e, favData) {
     e.target.parentElement.parentElement.parentElement.remove();
 }
 
+function alertEmptyStatus() {
+    if (displayType === 'favorites') {
+        info.children[1].classList.remove('invisible');
+        info.children[1].textContent = 'Why don\'t you mark your favorite?';
+    }
+}
+
 function showVenuesOnTheMap(position, time, events, index) {
     infowindowImg = infowindowContent.children[0];
     infowindowTitle = infowindowContent.children[1];
 
     setInfowindow(events);
-    
+
     setTimeout(() => {
         let venueMarker = new google.maps.Marker({
             position: position,
             map: map,
-            // icon: greenMarker,
+            icon: smallMarker,
             animation: google.maps.Animation.DROP
         });
-        venueMarker.addListener('click', function() {
+        venueMarker.addListener('click', () => {
             fillInfowindow(venueMarker, events, index);
         });
         markers.push(venueMarker);
@@ -393,35 +439,24 @@ function showVenuesOnTheMap(position, time, events, index) {
 }
 
 function setInfowindow(events) {
-    if (infowindowImg.childElementCount) { 
-        infowindowImg.removeChild(infowindowImg.firstElementChild); 
-    } 
-    if (infowindowTitle.children[0].textContent) { 
-        infowindowTitle.children[0].textContent = '';
-    } 
+    if (infowindowImg.childElementCount) {
+        infowindowImg.removeChild(infowindowImg.firstElementChild);
+    }
+    if (infowindowTitle.children[1].textContent) {
+        infowindowTitle.children[1].textContent = '';
+    }
     if (events.length === 1) {
-        infowindowTitle.children[1].textContent = 'a meetup for you!';
+        infowindowTitle.children[0].textContent = 'A meetup for you!';
     } else {
-        infowindowTitle.children[1].textContent = `${events.length} meetups are around here!`;
+        infowindowTitle.children[0].textContent = `${events.length} meetups are around here!`;
     }
     infowindow.open(map, marker);
 }
 
-function calculateDday(events, index) {
-    const d = new Date();
-    const year = String(d.getFullYear()); 
-    const month = (d.getMonth() + 1) < 10 ? '0' + String(d.getMonth() + 1) : String(d.getMonth() + 1);
-    const date = (d.getDate()) < 10 ? '0' + String(d.getDate()) : String(d.getDate());
-    const today = year + month + date;
-    let eventDate = events[index].local_date;
-    eventDate = eventDate.replace(/-/g, '');
-    return eventDate - today;
-}
-
 function fillInfowindow(venueMarker, events, index) {
-    if (infowindowImg.childElementCount) { 
-        infowindowImg.removeChild(infowindowImg.firstElementChild); 
-    }         
+    if (infowindowImg.childElementCount) {
+        infowindowImg.removeChild(infowindowImg.firstElementChild);
+    }
     const venueImg = document.createElement('img');
     if (events[index].featured_photo) {
         venueImg.src = events[index].featured_photo.thumb_link;
@@ -435,6 +470,17 @@ function fillInfowindow(venueMarker, events, index) {
     infowindow.open(map, venueMarker);
 }
 
+function calculateDday(events, index) {
+    const d = new Date();
+    const year = String(d.getFullYear());
+    const month = (d.getMonth() + 1) < 10 ? '0' + String(d.getMonth() + 1) : String(d.getMonth() + 1);
+    const date = (d.getDate()) < 10 ? '0' + String(d.getDate()) : String(d.getDate());
+    const today = year + month + date;
+    let eventDate = events[index].local_date;
+    eventDate = eventDate.replace(/-/g, '');
+    return eventDate - today;
+}
+
 function adjustBoundary() {
     var bounds = new google.maps.LatLngBounds();
     for (var i = 0; i < markers.length; i++) {
@@ -443,35 +489,3 @@ function adjustBoundary() {
     bounds.extend(pointer[0].getPosition());
     map.fitBounds(bounds);
 }
-
-function deleteMarkers() {
-    markers.forEach(marker => marker.setMap(null));
-    markers = [];
-}
-
-function deletePointer() {
-    pointer.forEach(p => p.setMap(null));
-    pointer = [];
-}
-
-function pickRandomImg() {
-    const replaceImg = ['https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80', 'https://images.unsplash.com/photo-1511988617509-a57c8a288659?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1351&q=80', 'https://images.unsplash.com/photo-1520881363902-a0ff4e722963?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1650&q=80', 'https://i.pinimg.com/564x/ff/97/7a/ff977a8ec331fb14fde7a36fa7f2f45d.jpg', 'https://i.pinimg.com/564x/11/95/6e/11956eef61d061e36c2bf1361b2f79c8.jpg'];
-
-    return replaceImg[Math.floor(Math.random() * replaceImg.length)];
-}
-
-
-
-
-
-// ㅇㅇ사람들 https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80
-
-
-// ㅇㅇ신난사람들 https://images.unsplash.com/photo-1511988617509-a57c8a288659?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1351&q=80
-
-// ㅇㅇ식탁앞 사람들 https://images.unsplash.com/photo-1519671282429-b44660ead0a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80
-
-// ㅇㅇ 랩탑모임 https://images.unsplash.com/photo-1520881363902-a0ff4e722963?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1650&q=80
-// ㅇㅇ https://images.unsplash.com/photo-1532339721094-4a264e1fec54?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1684&q=80 
-
-

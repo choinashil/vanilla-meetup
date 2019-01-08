@@ -6,7 +6,6 @@
 @import '_eventlist.scss';
 @import '_favorites.scss';
 
-
 html, body {
     box-sizing: border-box;
     font-family: 'Sarabun', 'SeoulHangangM';
@@ -51,7 +50,7 @@ html, body {
             padding: 10px;
             font-family: 'Sarabun', 'SeoulHangangM';
             font-size: 20px;
-        }  
+        }
     }
 }
 
@@ -99,7 +98,7 @@ html, body {
     display: flex;
     align-items: flex-start;
     height: 100%;
-    overflow-y: scroll; 
+    overflow-y: scroll;
     float: left;
     transition: all .3s;
     &-list {
@@ -165,13 +164,13 @@ html, body {
         i {color: $point;}
     }
     div:nth-child(2) {
-        i {color: #777;}
+        i {color: $bk3;}
     }
 }
 
 .show-favorites {
     div:nth-child(1) {
-        i {color: #777;}
+        i {color: $bk3;}
     }
     div:nth-child(2) {
         i {color: $point;}
