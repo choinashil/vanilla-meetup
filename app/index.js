@@ -94,20 +94,19 @@ function addEventListenerToMap() {
         input.value = '';
         addPointer(e.latLng, map);
         requestData(e.latLng.lat(), e.latLng.lng());
-        console.log(e.latLng.lat(), e.latLng.lng());
     });
 }
 
 function addEventListenerToAutocomplete() {
     autocomplete.addListener('place_changed', () => {
         infowindow.close();
-        let place = autocomplete.getPlace();
+        const place = autocomplete.getPlace();
         if (!place.place_id) {
             return;
         }
         geocoder.geocode({'placeId': place.place_id}, (results, status) => {
             if (status !== 'OK') {
-                info.children[1].classList.remove('invisible');
+                setAlertSpace();
                 info.children[1].textContent = `Geocoder failed due to: ${status}`;
                 return;
             }
@@ -118,6 +117,14 @@ function addEventListenerToAutocomplete() {
             requestData(location.lat(), location.lng());
         });
     });
+}
+
+function setAlertSpace() {
+    while (info.childElementCount > 2) {
+        info.removeChild(info.lastElementChild);
+    }
+    info.children[1].classList.remove('invisible');
+    setting.children[0].children[1].classList.add('invisible');
 }
 
 function addEventListenerToSetting() {
@@ -139,11 +146,11 @@ function addPointer(location, map) {
                 });
                 pointer.push(marker);
             } else {
-                info.children[1].classList.remove('invisible');
+                setAlertSpace();
                 info.children[1].textContent = 'No results found';
             }
         } else {
-            info.children[1].classList.remove('invisible');
+            setAlertSpace();
             info.children[1].textContent = `Geocoder failed due to: ${status}`;
         }
     });
@@ -176,7 +183,7 @@ function requestData(lat, lng, page = 10) {
             if (data.events.length) {
                 for (let i = 0; i < data.events.length; i++) {
                     if (data.events[i].venue) {
-                        let latLng = {lat: data.events[i].venue.lat, lng: data.events[i].venue.lon}
+                        const latLng = {lat: data.events[i].venue.lat, lng: data.events[i].venue.lon};
                         showVenuesOnTheMap(latLng, 100, data.events, i);
                     } else {
                         data.events[i].venue = data.city.city;
@@ -186,10 +193,7 @@ function requestData(lat, lng, page = 10) {
             setting.children[0].children[1].textContent = `${data.city.city}, ${data.city.country}`;
             showList(data);
         }).catch(err => {
-            while (info.childElementCount > 2) {
-                info.removeChild(info.lastElementChild);
-            }
-            info.children[1].classList.remove('invisible');
+            setAlertSpace();
             info.children[1].innerHTML = 'Error occured! <p> Please reload the page and try again';
         });
     }
@@ -252,7 +256,7 @@ function makeEventList(data) {
                 } else {
                     hostImg.src = 'https://www.smallstreammedia.nl/workspace/assets/images/empty_profile.png';
                 }
-                let eDate = data.events[i].local_date;
+                const eDate = data.events[i].local_date;
                 eDate = eDate.replace(/-/g, '.');
                 const dateAndTime = `${eDate} ${data.events[i].local_time}`;
                 eventTitle.textContent = data.events[i].name;
@@ -354,7 +358,7 @@ function makeFavorites() {
             const prepIn = document.createElement('span');
             const favCity = document.createElement('span');
 
-            let favData = JSON.parse(Object.values(localStorage)[i]);
+            const favData = JSON.parse(Object.values(localStorage)[i]);
             favWrapper.classList.add('fav-wrapper');
             fav.classList.add('fav');
 
@@ -401,7 +405,6 @@ function makeFavorites() {
 
 function pickRandomImg() {
     const imgStorage = ['https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80', 'https://images.unsplash.com/photo-1511988617509-a57c8a288659?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1351&q=80', 'https://images.unsplash.com/photo-1520881363902-a0ff4e722963?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1650&q=80', 'https://i.pinimg.com/564x/ff/97/7a/ff977a8ec331fb14fde7a36fa7f2f45d.jpg', 'https://i.pinimg.com/564x/11/95/6e/11956eef61d061e36c2bf1361b2f79c8.jpg'];
-
     return imgStorage[Math.floor(Math.random() * imgStorage.length)];
 }
 
@@ -424,7 +427,7 @@ function showVenuesOnTheMap(position, time, events, index) {
     setInfowindow(events);
 
     setTimeout(() => {
-        let venueMarker = new google.maps.Marker({
+        const venueMarker = new google.maps.Marker({
             position: position,
             map: map,
             icon: smallMarker,
@@ -464,26 +467,20 @@ function fillInfowindow(venueMarker, events, index) {
         venueImg.src = 'https://cdn.shopify.com/s/files/1/1061/1924/files/Kiss_Emoji_with_Closed_Eyes.png?8026536574188759287';
     }
     infowindowImg.appendChild(venueImg);
-    let dDay = calculateDday(events, index);
+    const dDay = calculateDday(events, index);
     infowindowTitle.children[0].textContent = dDay ? `D-${dDay}` : 'Today!';
     infowindowTitle.children[1].textContent = events[index].name;
     infowindow.open(map, venueMarker);
 }
 
 function calculateDday(events, index) {
-    const d = new Date();
-    const year = String(d.getFullYear());
-    const month = (d.getMonth() + 1) < 10 ? '0' + String(d.getMonth() + 1) : String(d.getMonth() + 1);
-    const date = (d.getDate()) < 10 ? '0' + String(d.getDate()) : String(d.getDate());
-    const today = year + month + date;
-    let eventDate = events[index].local_date;
-    eventDate = eventDate.replace(/-/g, '');
-    return eventDate - today;
+    const msPerDay = 24 * 60 * 60 * 1000;
+    return Math.ceil((new Date(events[index].local_date) - new Date()) / msPerDay);
 }
 
 function adjustBoundary() {
-    var bounds = new google.maps.LatLngBounds();
-    for (var i = 0; i < markers.length; i++) {
+    const bounds = new google.maps.LatLngBounds();
+    for (let i = 0; i < markers.length; i++) {
         bounds.extend(markers[i].getPosition());
     }
     bounds.extend(pointer[0].getPosition());
